@@ -660,6 +660,14 @@ const AdminUsers = () => {
                       >
                         <AtSign className="w-4 h-4 text-purple-500" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setupTotp(user)}
+                        title="Setup Google Authenticator"
+                      >
+                        <QrCode className="w-4 h-4 text-emerald-500" />
+                      </Button>
                       {user.role !== "super_admin" && (
                         <Button
                           variant="ghost"
