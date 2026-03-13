@@ -642,7 +642,7 @@ const Admin = () => {
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
                       <Calendar className="w-4.5 h-4.5 text-primary" />
                     </div>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalAppointments}</p>
+                    <p className="text-2xl font-bold text-foreground"><AnimatedNumber value={stats.totalAppointments} /></p>
                     <p className="text-xs text-muted-foreground mt-0.5">Appointments</p>
                     {stats.pendingAppointments > 0 && (
                       <span className="inline-flex items-center mt-1.5 text-[10px] font-medium bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 px-1.5 py-0.5 rounded-full">{stats.pendingAppointments} pending</span>
