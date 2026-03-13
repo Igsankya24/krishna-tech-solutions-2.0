@@ -585,181 +585,207 @@ const Admin = () => {
     switch (activeTab) {
       case "dashboard":
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-8">
+            {/* Welcome Banner */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary to-accent p-6 md:p-8 text-primary-foreground">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+              <div className="relative z-10">
+                <h2 className="text-2xl md:text-3xl font-bold font-display">
+                  Welcome back{isSuperAdmin ? ", Super Admin" : ""}! 👋
+                </h2>
+                <p className="mt-2 text-primary-foreground/80 text-sm md:text-base max-w-xl">
+                  Here's what's happening with your platform today. Manage your services, track appointments, and stay on top of everything.
+                </p>
+              </div>
+            </div>
+
+            {/* Stat Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {permissions.can_view_users && (
-                <div 
-                  className="bg-card rounded-xl p-6 border border-border cursor-pointer hover:border-primary transition-colors"
+                <button
                   onClick={() => setActiveTab("users")}
+                  className="group relative overflow-hidden bg-card rounded-xl p-4 border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300 text-left"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-muted-foreground text-sm mb-2">Total Users</h3>
-                      <p className="text-3xl font-bold text-foreground">{stats.totalUsers}</p>
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-[2rem] group-hover:bg-primary/10 transition-colors" />
+                  <div className="relative">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                      <Users className="w-4.5 h-4.5 text-primary" />
                     </div>
-                    <Users className="w-10 h-10 text-primary/50" />
+                    <p className="text-2xl font-bold text-foreground">{stats.totalUsers}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Total Users</p>
                   </div>
-                </div>
+                </button>
               )}
               {permissions.can_view_services && (
-                <div 
-                  className="bg-card rounded-xl p-6 border border-border cursor-pointer hover:border-primary transition-colors"
+                <button
                   onClick={() => setActiveTab("services")}
+                  className="group relative overflow-hidden bg-card rounded-xl p-4 border border-border hover:border-accent/50 hover:shadow-lg transition-all duration-300 text-left"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-muted-foreground text-sm mb-2">Services</h3>
-                      <p className="text-3xl font-bold text-foreground">{stats.activeServices}/{stats.totalServices}</p>
-                      <p className="text-xs text-muted-foreground">visible / total</p>
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-accent/5 rounded-bl-[2rem] group-hover:bg-accent/10 transition-colors" />
+                  <div className="relative">
+                    <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center mb-3">
+                      <Briefcase className="w-4.5 h-4.5 text-accent" />
                     </div>
-                    <Briefcase className="w-10 h-10 text-primary/50" />
+                    <p className="text-2xl font-bold text-foreground">{stats.activeServices}<span className="text-base text-muted-foreground font-normal">/{stats.totalServices}</span></p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Active Services</p>
                   </div>
-                </div>
+                </button>
               )}
               {permissions.can_view_appointments && (
-                <div 
-                  className="bg-card rounded-xl p-6 border border-border cursor-pointer hover:border-primary transition-colors"
+                <button
                   onClick={() => setActiveTab("appointments")}
+                  className="group relative overflow-hidden bg-card rounded-xl p-4 border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300 text-left"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-muted-foreground text-sm mb-2">Appointments</h3>
-                      <p className="text-3xl font-bold text-foreground">{stats.totalAppointments}</p>
-                      {stats.pendingAppointments > 0 && (
-                        <p className="text-xs text-yellow-500">{stats.pendingAppointments} pending</p>
-                      )}
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-[2rem] group-hover:bg-primary/10 transition-colors" />
+                  <div className="relative">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                      <Calendar className="w-4.5 h-4.5 text-primary" />
                     </div>
-                    <Calendar className="w-10 h-10 text-primary/50" />
+                    <p className="text-2xl font-bold text-foreground">{stats.totalAppointments}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Appointments</p>
+                    {stats.pendingAppointments > 0 && (
+                      <span className="inline-flex items-center mt-1.5 text-[10px] font-medium bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 px-1.5 py-0.5 rounded-full">{stats.pendingAppointments} pending</span>
+                    )}
                   </div>
-                </div>
+                </button>
               )}
               {permissions.can_view_coupons && (
-                <div 
-                  className="bg-card rounded-xl p-6 border border-border cursor-pointer hover:border-primary transition-colors"
+                <button
                   onClick={() => setActiveTab("coupons")}
+                  className="group relative overflow-hidden bg-card rounded-xl p-4 border border-border hover:border-accent/50 hover:shadow-lg transition-all duration-300 text-left"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-muted-foreground text-sm mb-2">Coupons</h3>
-                      <p className="text-3xl font-bold text-foreground">{stats.totalCoupons}</p>
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-accent/5 rounded-bl-[2rem] group-hover:bg-accent/10 transition-colors" />
+                  <div className="relative">
+                    <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center mb-3">
+                      <Ticket className="w-4.5 h-4.5 text-accent" />
                     </div>
-                    <Ticket className="w-10 h-10 text-primary/50" />
+                    <p className="text-2xl font-bold text-foreground">{stats.totalCoupons}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Coupons</p>
                   </div>
-                </div>
+                </button>
               )}
               {permissions.can_view_messages && (
-                <div 
-                  className="bg-card rounded-xl p-6 border border-border cursor-pointer hover:border-primary transition-colors"
+                <button
                   onClick={() => setActiveTab("messages")}
+                  className="group relative overflow-hidden bg-card rounded-xl p-4 border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300 text-left"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-muted-foreground text-sm mb-2">Messages</h3>
-                      <p className="text-3xl font-bold text-foreground">{stats.totalMessages}</p>
-                      {stats.unreadMessages > 0 && (
-                        <p className="text-xs text-yellow-500">{stats.unreadMessages} unread</p>
-                      )}
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-[2rem] group-hover:bg-primary/10 transition-colors" />
+                  <div className="relative">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                      <MessageSquare className="w-4.5 h-4.5 text-primary" />
                     </div>
-                    <MessageSquare className="w-10 h-10 text-primary/50" />
+                    <p className="text-2xl font-bold text-foreground">{stats.totalMessages}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Messages</p>
+                    {stats.unreadMessages > 0 && (
+                      <span className="inline-flex items-center mt-1.5 text-[10px] font-medium bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">{stats.unreadMessages} unread</span>
+                    )}
+                  </div>
+                </button>
+              )}
+            </div>
+
+            {/* Deletion Requests Alert */}
+            {isSuperAdmin && stats.pendingDeletionRequests > 0 && (
+              <button
+                onClick={() => setActiveTab("deletion-requests")}
+                className="w-full flex items-center gap-4 bg-destructive/5 border border-destructive/20 rounded-xl p-4 hover:bg-destructive/10 transition-colors text-left"
+              >
+                <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="w-5 h-5 text-destructive" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-destructive text-sm">{stats.pendingDeletionRequests} Pending Deletion Request{stats.pendingDeletionRequests > 1 ? 's' : ''}</p>
+                  <p className="text-xs text-muted-foreground">Awaiting your approval</p>
+                </div>
+                <span className="text-xs text-destructive font-medium">Review →</span>
+              </button>
+            )}
+
+            {/* Two Column Layout for Lists */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Pending Appointments */}
+              {permissions.can_view_appointments && pendingAppointmentsList.length > 0 && (
+                <div className="bg-card rounded-xl border border-border overflow-hidden">
+                  <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                        <Calendar className="w-4 h-4 text-yellow-500" />
+                      </div>
+                      <h3 className="font-semibold text-foreground text-sm">Pending Appointments</h3>
+                    </div>
+                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setActiveTab("appointments")}>
+                      View All
+                    </Button>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {pendingAppointmentsList.map((apt) => (
+                      <div 
+                        key={apt.id} 
+                        className="px-5 py-3.5 hover:bg-muted/50 cursor-pointer transition-colors"
+                        onClick={() => setActiveTab("appointments")}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-foreground text-sm">{apt.reference_id}</span>
+                              <span className="text-[10px] font-medium bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 px-1.5 py-0.5 rounded-full">Pending</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {apt.user_name || "Guest"} · {apt.service_name || "Service"}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs font-medium text-foreground">{new Date(apt.appointment_date).toLocaleDateString()}</p>
+                            <p className="text-[11px] text-muted-foreground">{apt.appointment_time}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
-              {isSuperAdmin && stats.pendingDeletionRequests > 0 && (
-                <div 
-                  className="bg-card rounded-xl p-6 border border-destructive/50 cursor-pointer hover:border-destructive transition-colors"
-                  onClick={() => setActiveTab("deletion-requests")}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-muted-foreground text-sm mb-2">Pending Deletions</h3>
-                      <p className="text-3xl font-bold text-destructive">{stats.pendingDeletionRequests}</p>
-                      <p className="text-xs text-muted-foreground">awaiting approval</p>
+
+              {/* Recent Messages */}
+              {permissions.can_view_messages && recentMessages.length > 0 && (
+                <div className="bg-card rounded-xl border border-border overflow-hidden">
+                  <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <MessageSquare className="w-4 h-4 text-primary" />
+                      </div>
+                      <h3 className="font-semibold text-foreground text-sm">Recent Messages</h3>
                     </div>
-                    <Trash2 className="w-10 h-10 text-destructive/50" />
+                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setActiveTab("messages")}>
+                      View All
+                    </Button>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {recentMessages.map((msg) => (
+                      <div 
+                        key={msg.id} 
+                        className="px-5 py-3.5 hover:bg-muted/50 cursor-pointer transition-colors"
+                        onClick={() => setActiveTab("messages")}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-foreground text-sm">{msg.name}</span>
+                              {!msg.is_read && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">{msg.message}</p>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground whitespace-nowrap">
+                            {new Date(msg.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
-
-            {/* Pending Appointments Preview */}
-            {permissions.can_view_appointments && pendingAppointmentsList.length > 0 && (
-              <div className="bg-card rounded-xl border border-border">
-                <div className="p-4 border-b border-border flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-yellow-500" />
-                    <h3 className="font-semibold text-foreground">Pending Appointments</h3>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => setActiveTab("appointments")}>
-                    View All
-                  </Button>
-                </div>
-                <div className="divide-y divide-border">
-                  {pendingAppointmentsList.map((apt) => (
-                    <div 
-                      key={apt.id} 
-                      className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => setActiveTab("appointments")}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-foreground">{apt.reference_id}</span>
-                            <span className="text-xs bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full">Pending</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {apt.user_name || "Guest"} - {apt.service_name || "Service"}
-                          </p>
-                        </div>
-                        <div className="text-right text-sm">
-                          <p className="text-foreground">{new Date(apt.appointment_date).toLocaleDateString()}</p>
-                          <p className="text-muted-foreground">{apt.appointment_time}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Recent Messages Preview */}
-            {permissions.can_view_messages && recentMessages.length > 0 && (
-              <div className="bg-card rounded-xl border border-border">
-                <div className="p-4 border-b border-border flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold text-foreground">Recent Messages</h3>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => setActiveTab("messages")}>
-                    View All
-                  </Button>
-                </div>
-                <div className="divide-y divide-border">
-                  {recentMessages.map((msg) => (
-                    <div 
-                      key={msg.id} 
-                      className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => setActiveTab("messages")}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-foreground">{msg.name}</span>
-                            {!msg.is_read && (
-                              <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">New</span>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground truncate">{msg.message}</p>
-                        </div>
-                        <p className="text-xs text-muted-foreground whitespace-nowrap">
-                          {new Date(msg.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         );
       case "analytics":
@@ -827,18 +853,18 @@ const Admin = () => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-card border-r border-border transform transition-transform duration-300 flex flex-col h-screen ${
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-60 bg-card border-r border-border transform transition-transform duration-300 flex flex-col h-screen ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="p-6 border-b border-border flex-shrink-0">
-          <h1 className="text-xl font-bold text-foreground">
+        <div className="px-5 py-5 border-b border-border flex-shrink-0">
+          <h1 className="text-base font-bold text-foreground font-display">
             {isSuperAdmin ? "Admin Panel" : isAdmin ? "Control Panel" : "User Panel"}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Krishna Tech Solutions</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Krishna Tech Solutions</p>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -846,16 +872,16 @@ const Admin = () => {
                 setActiveTab(tab.id);
                 setSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                 activeTab === tab.id
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              <tab.icon className="w-5 h-5" />
-              {tab.label}
+              <tab.icon className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{tab.label}</span>
               {tab.badge && tab.badge > 0 && (
-                <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded-full">
+                <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0.5 rounded-full leading-none">
                   {tab.badge}
                 </span>
               )}
@@ -864,14 +890,17 @@ const Admin = () => {
         </nav>
 
         <div className="p-4 border-t border-border flex-shrink-0">
-          <div className="px-4">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-foreground">
-                {isSuperAdmin ? "Super Admin" : "Admin"}
-              </p>
-              {isSuperAdmin && <Shield className="w-4 h-4 text-primary" />}
+          <div className="flex items-center gap-2.5 px-2">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-bold text-primary">{user?.email?.charAt(0).toUpperCase()}</span>
             </div>
-            <p className="text-xs text-muted-foreground">{user?.email}</p>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-foreground flex items-center gap-1">
+                {isSuperAdmin ? "Super Admin" : "Admin"}
+                {isSuperAdmin && <Shield className="w-3 h-3 text-primary" />}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
+            </div>
           </div>
         </div>
       </aside>
@@ -887,7 +916,7 @@ const Admin = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Bar with Notifications */}
-        <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-end gap-3">
+        <header className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-3 flex items-center justify-end gap-2 sticky top-0 z-10">
           <ThemeToggle />
           <Popover>
             <PopoverTrigger asChild>
