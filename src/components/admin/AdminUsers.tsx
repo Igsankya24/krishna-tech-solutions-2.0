@@ -395,7 +395,32 @@ const AdminUsers = () => {
     setChangingUsername(false);
   };
 
-  const handleEditSave = async () => {
+  const setupTotp = async (user: UserProfile) => {
+    setTotpSetupUser(user);
+    setSettingUpTotp(true);
+    setTotpSecret("");
+    setTotpUri("");
+
+    try {
+      const { data, error } = await supabase.functions.invoke("setup-totp", {
+        body: { user_id: user.user_id },
+      });
+
+      if (error || data?.error) {
+        toast({ title: "Error", description: data?.error || error?.message || "Failed to setup authenticator", variant: "destructive" });
+        setTotpSetupUser(null);
+      } else {
+        setTotpSecret(data.secret);
+        setTotpUri(data.otpauth_uri);
+      }
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to setup authenticator", variant: "destructive" });
+      setTotpSetupUser(null);
+    }
+    setSettingUpTotp(false);
+  };
+
+
     if (!editingUser) return;
 
     setSaving(true);
