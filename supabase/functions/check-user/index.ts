@@ -28,7 +28,8 @@ serve(async (req) => {
     const trimmed = login_id.trim();
     const isEmail = trimmed.includes("@");
 
-    let found = false;
+    // Look up user
+    let userId: string | null = null;
 
     if (isEmail) {
       const { data } = await supabaseAdmin
@@ -36,56 +37,50 @@ serve(async (req) => {
         .select("user_id")
         .eq("email", trimmed)
         .maybeSingle();
-      found = !!data;
+      userId = data?.user_id || null;
     } else {
       const { data } = await supabaseAdmin
         .from("profiles")
         .select("user_id")
         .ilike("username", trimmed)
         .maybeSingle();
-      found = !!data;
+      userId = data?.user_id || null;
     }
 
-    // If user exists, also check if TOTP is enabled
-    if (found) {
-      let userId: string | null = null;
-      if (isEmail) {
-        const { data } = await supabaseAdmin
-          .from("profiles")
-          .select("user_id")
-          .eq("email", trimmed)
-          .maybeSingle();
-        userId = data?.user_id || null;
-      } else {
-        const { data } = await supabaseAdmin
-          .from("profiles")
-          .select("user_id")
-          .ilike("username", trimmed)
-          .maybeSingle();
-        userId = data?.user_id || null;
-      }
-
-      if (userId) {
-        const { data: totp } = await supabaseAdmin
-          .from("totp_secrets")
-          .select("is_enabled")
-          .eq("user_id", userId)
-          .maybeSingle();
-
-        return new Response(
-          JSON.stringify({ exists: true, totp_enabled: totp?.is_enabled || false }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
+    if (!userId) {
+      return new Response(JSON.stringify({ exists: false, auth_method: "password", totp_enabled: false }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    return new Response(JSON.stringify({ exists: found, totp_enabled: false }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Check global auth method setting
+    const { data: authMethodSetting } = await supabaseAdmin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "auth_method")
+      .maybeSingle();
+
+    const authMethod = authMethodSetting?.value || "password";
+
+    // Check if TOTP is set up for this user
+    let totpEnabled = false;
+    if (authMethod === "authenticator") {
+      const { data: totp } = await supabaseAdmin
+        .from("totp_secrets")
+        .select("is_enabled")
+        .eq("user_id", userId)
+        .maybeSingle();
+      totpEnabled = totp?.is_enabled || false;
+    }
+
+    return new Response(
+      JSON.stringify({ exists: true, auth_method: authMethod, totp_enabled: totpEnabled }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
     console.error("Error in check-user:", error);
     return new Response(JSON.stringify({ exists: false }), {
