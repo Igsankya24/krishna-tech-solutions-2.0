@@ -854,7 +854,7 @@ const Admin = () => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-60 bg-card border-r border-border transform transition-transform duration-300 flex flex-col h-screen ${
+        className={`fixed inset-y-0 left-0 z-40 w-60 bg-card border-r border-border transform transition-transform duration-300 flex flex-col h-screen ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
