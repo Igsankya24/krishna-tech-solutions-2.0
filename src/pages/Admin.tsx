@@ -612,7 +612,7 @@ const Admin = () => {
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
                       <Users className="w-4.5 h-4.5 text-primary" />
                     </div>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalUsers}</p>
+                    <p className="text-2xl font-bold text-foreground"><AnimatedNumber value={stats.totalUsers} /></p>
                     <p className="text-xs text-muted-foreground mt-0.5">Total Users</p>
                   </div>
                 </button>
