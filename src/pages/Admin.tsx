@@ -843,29 +843,30 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background">
       {/* Mobile Sidebar Toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg border border-border"
+        className="lg:hidden fixed top-3.5 left-3.5 z-50 p-2.5 bg-card rounded-xl border border-border shadow-sm"
+        aria-label="Toggle sidebar"
       >
-        {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-60 bg-card border-r border-border transform transition-transform duration-300 flex flex-col h-screen ${
+        className={`fixed inset-y-0 left-0 z-40 w-[15.5rem] bg-card border-r border-border transform transition-transform duration-300 ease-out flex flex-col ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="px-5 py-5 border-b border-border flex-shrink-0">
-          <h1 className="text-base font-bold text-foreground font-display">
+        <div className="px-5 py-4 border-b border-border flex-shrink-0">
+          <h1 className="text-sm font-bold text-foreground font-display tracking-tight">
             {isSuperAdmin ? "Admin Panel" : isAdmin ? "Control Panel" : "User Panel"}
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Krishna Tech Solutions</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Krishna Tech Solutions</p>
         </div>
 
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto" role="navigation">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -873,16 +874,17 @@ const Admin = () => {
                 setActiveTab(tab.id);
                 setSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
                 activeTab === tab.id
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
+              aria-current={activeTab === tab.id ? "page" : undefined}
             >
               <tab.icon className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">{tab.label}</span>
               {tab.badge && tab.badge > 0 && (
-                <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0.5 rounded-full leading-none">
+                <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0.5 rounded-full leading-none font-semibold">
                   {tab.badge}
                 </span>
               )}
@@ -890,8 +892,8 @@ const Admin = () => {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-border flex-shrink-0">
-          <div className="flex items-center gap-2.5 px-2">
+        <div className="p-3 border-t border-border flex-shrink-0">
+          <div className="flex items-center gap-2.5 px-2 py-1">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
               <span className="text-xs font-bold text-primary">{user?.email?.charAt(0).toUpperCase()}</span>
             </div>
@@ -915,9 +917,9 @@ const Admin = () => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:ml-60">
-        {/* Top Bar with Notifications */}
-        <header className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-3 flex items-center justify-end gap-2 sticky top-0 z-10">
+      <div className="lg:ml-[15.5rem] flex flex-col min-h-screen">
+        {/* Top Bar */}
+        <header className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-3 flex items-center justify-end gap-2 sticky top-0 z-20">
           <ThemeToggle />
           <Popover>
             <PopoverTrigger asChild>
@@ -983,7 +985,7 @@ const Admin = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6 lg:p-8 pt-14 lg:pt-8">
+        <main className="flex-1 p-5 lg:p-8 pt-4">
           {renderContent()}
         </main>
       </div>

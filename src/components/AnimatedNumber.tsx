@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useAnimatedCounter } from "@/hooks/useAnimatedCounter";
 
 interface AnimatedNumberProps {
@@ -6,7 +7,13 @@ interface AnimatedNumberProps {
   className?: string;
 }
 
-export function AnimatedNumber({ value, duration = 800, className }: AnimatedNumberProps) {
-  const count = useAnimatedCounter(value, duration);
-  return <span className={className}>{count}</span>;
-}
+const AnimatedNumber = React.forwardRef<HTMLSpanElement, AnimatedNumberProps>(
+  ({ value, duration = 800, className }, ref) => {
+    const count = useAnimatedCounter(value, duration);
+    return <span ref={ref} className={className}>{count}</span>;
+  }
+);
+
+AnimatedNumber.displayName = "AnimatedNumber";
+
+export { AnimatedNumber };

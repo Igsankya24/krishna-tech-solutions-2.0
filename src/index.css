@@ -6,24 +6,24 @@
 
 @layer base {
   :root {
-    --background: 40 20% 97%;
-    --foreground: 230 25% 12%;
+    --background: 220 16% 96%;
+    --foreground: 224 28% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 230 25% 12%;
+    --card-foreground: 224 28% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 230 25% 12%;
+    --popover-foreground: 224 28% 12%;
 
     --primary: 230 65% 52%;
     --primary-foreground: 0 0% 100%;
     --primary-glow: 230 70% 62%;
 
-    --secondary: 40 30% 95%;
-    --secondary-foreground: 230 25% 12%;
+    --secondary: 220 16% 93%;
+    --secondary-foreground: 224 28% 12%;
 
-    --muted: 40 15% 93%;
-    --muted-foreground: 230 10% 45%;
+    --muted: 220 14% 92%;
+    --muted-foreground: 224 12% 46%;
 
     --accent: 16 80% 58%;
     --accent-foreground: 0 0% 100%;
@@ -31,21 +31,21 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 15% 90%;
-    --input: 40 15% 88%;
+    --border: 220 14% 89%;
+    --input: 220 14% 87%;
     --ring: 230 65% 52%;
 
     --radius: 0.75rem;
 
     /* Custom tokens */
-    --hero-bg: 230 30% 10%;
+    --hero-bg: 228 28% 10%;
     --hero-foreground: 0 0% 100%;
     --gradient-primary: linear-gradient(135deg, hsl(230 65% 52%), hsl(16 80% 58%));
-    --gradient-hero: linear-gradient(160deg, hsl(230 30% 8%) 0%, hsl(230 25% 16%) 50%, hsl(230 20% 12%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(40 20% 97%) 100%);
-    --shadow-glow: 0 0 60px hsl(230 65% 52% / 0.15);
-    --shadow-card: 0 1px 3px hsl(230 30% 10% / 0.04), 0 8px 30px hsl(230 30% 10% / 0.06);
-    --shadow-card-hover: 0 8px 40px hsl(230 65% 52% / 0.12);
+    --gradient-hero: linear-gradient(165deg, hsl(228 28% 6%) 0%, hsl(228 24% 14%) 40%, hsl(230 20% 10%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 16% 97%) 100%);
+    --shadow-glow: 0 0 80px hsl(230 65% 52% / 0.12);
+    --shadow-card: 0 1px 2px hsl(224 28% 12% / 0.03), 0 4px 16px hsl(224 28% 12% / 0.04);
+    --shadow-card-hover: 0 8px 32px hsl(230 65% 52% / 0.1), 0 2px 8px hsl(224 28% 12% / 0.04);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -58,36 +58,45 @@
   }
 
   .dark {
-    --background: 230 25% 7%;
-    --foreground: 40 20% 95%;
+    --background: 228 24% 7%;
+    --foreground: 220 16% 94%;
 
-    --card: 230 25% 11%;
-    --card-foreground: 40 20% 95%;
+    --card: 228 22% 11%;
+    --card-foreground: 220 16% 94%;
 
-    --popover: 230 25% 11%;
-    --popover-foreground: 40 20% 95%;
+    --popover: 228 22% 11%;
+    --popover-foreground: 220 16% 94%;
 
     --primary: 230 65% 62%;
-    --primary-foreground: 230 30% 6%;
+    --primary-foreground: 228 28% 6%;
 
-    --secondary: 230 20% 16%;
-    --secondary-foreground: 40 20% 95%;
+    --secondary: 228 20% 16%;
+    --secondary-foreground: 220 16% 94%;
 
-    --muted: 230 20% 15%;
-    --muted-foreground: 230 15% 55%;
+    --muted: 228 18% 14%;
+    --muted-foreground: 224 14% 52%;
 
     --accent: 16 80% 60%;
-    --accent-foreground: 230 30% 6%;
+    --accent-foreground: 228 28% 6%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 40 20% 95%;
+    --destructive-foreground: 220 16% 94%;
 
-    --border: 230 20% 18%;
-    --input: 230 20% 18%;
+    --border: 228 18% 17%;
+    --input: 228 18% 17%;
     --ring: 230 65% 62%;
 
-    --hero-bg: 230 30% 5%;
+    --hero-bg: 228 28% 5%;
     --hero-foreground: 0 0% 100%;
+
+    --sidebar-background: 228 22% 9%;
+    --sidebar-foreground: 220 16% 70%;
+    --sidebar-primary: 230 65% 62%;
+    --sidebar-primary-foreground: 228 28% 6%;
+    --sidebar-accent: 228 18% 14%;
+    --sidebar-accent-foreground: 220 16% 94%;
+    --sidebar-border: 228 18% 15%;
+    --sidebar-ring: 230 65% 62%;
   }
 }
 
@@ -99,11 +108,17 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'DM Sans', sans-serif;
+    font-feature-settings: 'kern' 1, 'liga' 1;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Outfit', sans-serif;
     letter-spacing: -0.02em;
+  }
+
+  /* Improve focus accessibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 }
 
@@ -127,12 +142,17 @@
 
   .card-shadow {
     box-shadow: var(--shadow-card);
-    transition: box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
   }
 
   .card-shadow:hover {
     box-shadow: var(--shadow-card-hover);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+  }
+
+  /* Glass morphism utility */
+  .glass {
+    @apply bg-card/60 backdrop-blur-xl border border-border/50;
   }
 
   /* Subtle grain texture overlay */
@@ -140,9 +160,22 @@
     content: '';
     position: absolute;
     inset: 0;
-    opacity: 0.03;
+    opacity: 0.025;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
     pointer-events: none;
+  }
+
+  /* Section badge styles */
+  .section-badge {
+    @apply inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-primary;
+  }
+
+  .section-title {
+    @apply font-display text-3xl md:text-4xl font-bold text-foreground mt-2 tracking-tight;
+  }
+
+  .hero-title {
+    @apply font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-hero-foreground leading-[1.05] tracking-tight;
   }
 }
 
@@ -156,11 +189,11 @@
   }
 
   .animate-slide-up {
-    animation: slide-up 0.6s ease-out;
+    animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .animate-fade-in {
-    animation: fade-in 0.8s ease-out;
+    animation: fade-in 0.6s ease-out;
   }
 
   @keyframes float {
@@ -174,7 +207,7 @@
   }
 
   @keyframes slide-up {
-    from { opacity: 0; transform: translateY(30px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
