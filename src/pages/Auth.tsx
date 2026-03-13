@@ -4,18 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 
 const Auth = () => {
   const [loginId, setLoginId] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [totpCode, setTotpCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string>("Welcome Back");
-  
-  const { signIn, signOut, user } = useAuth();
+  const [step, setStep] = useState<"identity" | "totp">("identity");
+
+  const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const hasRedirected = useRef(false);
@@ -27,7 +32,7 @@ const Auth = () => {
         .from("site_settings")
         .select("key, value")
         .in("key", ["auth_logo_url", "company_name"]);
-      
+
       if (data) {
         data.forEach((setting) => {
           if (setting.key === "auth_logo_url" && setting.value) {
@@ -51,112 +56,77 @@ const Auth = () => {
           .from("user_roles")
           .select("role")
           .eq("user_id", user.id);
-        
-        const userRoles = roles?.map(r => r.role) || [];
-        const isAdminUser = userRoles.includes("admin") || userRoles.includes("super_admin");
-        
+
+        const userRoles = roles?.map((r) => r.role) || [];
+        const isAdminUser =
+          userRoles.includes("admin") || userRoles.includes("super_admin");
+
         navigate(isAdminUser ? "/admin" : "/dashboard");
       };
       checkAndRedirect();
     }
   }, [user, navigate]);
 
-  const checkFrozenStatus = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("is_frozen")
-      .eq("user_id", userId)
-      .maybeSingle();
-    
-    if (error) {
-      console.error("Error checking frozen status:", error);
-      return false;
-    }
-    
-    return (data as any)?.is_frozen ?? false;
-  };
-
-  // Detect if input is email or username
-  const isEmail = (value: string) => value.includes("@");
-
-  // Look up email by username from profiles table
-  const getEmailByUsername = async (username: string): Promise<string | null> => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("email, user_id")
-      .ilike("username", username)
-      .maybeSingle();
-    
-    if (error || !data) {
-      return null;
-    }
-    
-    // Return email if available, otherwise return null (auth will fail)
-    return data.email || null;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleIdentitySubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!loginId.trim()) return;
+    setStep("totp");
+  };
+
+  const handleTotpSubmit = async () => {
+    if (totpCode.length !== 6) return;
     setIsLoading(true);
 
     try {
-      const rawLoginId = loginId.trim();
-      let email = rawLoginId;
+      const { data, error } = await supabase.functions.invoke("verify-totp", {
+        body: { login_id: loginId.trim(), totp_code: totpCode },
+      });
 
-      // If not email format, look up the actual email from profiles using username
-      if (!isEmail(rawLoginId)) {
-        const foundEmail = await getEmailByUsername(rawLoginId);
-        if (!foundEmail) {
-          toast({
-            title: "Login Failed",
-            description: "Username not found",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-        email = foundEmail;
-      }
-
-      const { error } = await signIn(email, password);
       if (error) {
         toast({
           title: "Login Failed",
-          description: "Invalid username/email or password",
+          description: "Unable to verify. Please try again.",
           variant: "destructive",
         });
-      } else {
-        // Check if account is frozen
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const isFrozen = await checkFrozenStatus(user.id);
-          if (isFrozen) {
-            await signOut();
-            toast({
-              title: "Account Frozen",
-              description: "Your account is not accessible. Please contact admin for assistance.",
-              variant: "destructive",
-            });
-            setIsLoading(false);
-            return;
-          }
+        setTotpCode("");
+        setIsLoading(false);
+        return;
+      }
 
-          // Check if user is admin/super_admin
-          const { data: roles } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", user.id);
+      if (data?.error) {
+        toast({
+          title: "Login Failed",
+          description: data.error,
+          variant: "destructive",
+        });
+        setTotpCode("");
+        setIsLoading(false);
+        return;
+      }
 
-          const userRoles = roles?.map(r => r.role) || [];
-          const isAdminUser = userRoles.includes("admin") || userRoles.includes("super_admin");
+      if (data?.session) {
+        // Set the session from the edge function response
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
 
-          toast({
-            title: "Welcome back!",
-            description: "You have successfully logged in.",
-          });
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully logged in.",
+        });
 
-          navigate(isAdminUser ? "/admin" : "/dashboard");
-        }
+        // Redirect based on role
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.session.user.id);
+
+        const userRoles = roles?.map((r) => r.role) || [];
+        const isAdminUser =
+          userRoles.includes("admin") || userRoles.includes("super_admin");
+
+        navigate(isAdminUser ? "/admin" : "/dashboard");
       }
     } catch (error) {
       toast({
@@ -169,63 +139,108 @@ const Auth = () => {
     }
   };
 
+  // Auto-submit when 6 digits are entered
+  useEffect(() => {
+    if (totpCode.length === 6 && step === "totp") {
+      handleTotpSubmit();
+    }
+  }, [totpCode]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="bg-card rounded-2xl p-8 border border-border shadow-lg">
           <div className="text-center mb-8">
             {companyLogo ? (
-              <img 
-                src={companyLogo} 
-                alt="Company Logo" 
+              <img
+                src={companyLogo}
+                alt="Company Logo"
                 className="h-16 w-auto mx-auto mb-4 object-contain"
               />
             ) : null}
-            <h1 className="text-2xl font-bold text-foreground mb-2">{companyName}</h1>
-            <p className="text-muted-foreground">Sign in to access your account</p>
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              {companyName}
+            </h1>
+            <p className="text-muted-foreground">
+              {step === "identity"
+                ? "Sign in to access your account"
+                : "Enter your Google Authenticator code"}
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Username or Email
-              </label>
-              <Input
-                type="text"
-                value={loginId}
-                onChange={(e) => setLoginId(e.target.value)}
-                placeholder="Enter username or email"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Password
-              </label>
-              <div className="relative">
+          {step === "identity" ? (
+            <form onSubmit={handleIdentitySubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Username or Email
+                </label>
                 <Input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  type="text"
+                  value={loginId}
+                  onChange={(e) => setLoginId(e.target.value)}
+                  placeholder="Enter username or email"
                   required
-                  minLength={6}
+                  autoFocus
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
               </div>
-            </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Please wait..." : "Sign In"}
-            </Button>
-          </form>
+              <Button type="submit" className="w-full">
+                Continue
+              </Button>
+            </form>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
+                <p className="text-sm text-muted-foreground">
+                  Signing in as <span className="font-medium text-foreground">{loginId}</span>
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center gap-4">
+                <label className="block text-sm font-medium text-foreground">
+                  6-Digit Authenticator Code
+                </label>
+                <InputOTP
+                  maxLength={6}
+                  value={totpCode}
+                  onChange={(value) => setTotpCode(value)}
+                  disabled={isLoading}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                  </InputOTPGroup>
+                  <span className="text-2xl text-muted-foreground">-</span>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+
+              <Button
+                onClick={handleTotpSubmit}
+                className="w-full"
+                disabled={isLoading || totpCode.length !== 6}
+              >
+                {isLoading ? "Verifying..." : "Verify & Sign In"}
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setStep("identity");
+                  setTotpCode("");
+                }}
+              >
+                ← Use different account
+              </Button>
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
@@ -234,7 +249,10 @@ const Auth = () => {
           </div>
 
           <div className="mt-6 text-center">
-            <a href="/" className="text-muted-foreground hover:text-foreground text-sm">
+            <a
+              href="/"
+              className="text-muted-foreground hover:text-foreground text-sm"
+            >
               ← Back to Home
             </a>
           </div>

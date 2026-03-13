@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { UserCheck, UserX, Search, Edit, X, Save, Camera, Phone, MapPin, Mail, Lock, Unlock, Trash2, Key, Shield, LogIn, CalendarCheck, UserPlus, Eye, EyeOff, AtSign } from "lucide-react";
+import { UserCheck, UserX, Search, Edit, X, Save, Camera, Phone, MapPin, Mail, Lock, Unlock, Trash2, Key, Shield, LogIn, CalendarCheck, UserPlus, Eye, EyeOff, AtSign, ShieldCheck, Copy, QrCode } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -75,6 +75,10 @@ const AdminUsers = () => {
   const [usernameChangeUser, setUsernameChangeUser] = useState<UserProfile | null>(null);
   const [newUsername, setNewUsername] = useState("");
   const [changingUsername, setChangingUsername] = useState(false);
+  const [totpSetupUser, setTotpSetupUser] = useState<UserProfile | null>(null);
+  const [totpSecret, setTotpSecret] = useState<string>("");
+  const [totpUri, setTotpUri] = useState<string>("");
+  const [settingUpTotp, setSettingUpTotp] = useState(false);
   const { toast } = useToast();
   const { isSuperAdmin } = useAuth();
 
@@ -391,7 +395,32 @@ const AdminUsers = () => {
     setChangingUsername(false);
   };
 
-  const handleEditSave = async () => {
+  const setupTotp = async (user: UserProfile) => {
+    setTotpSetupUser(user);
+    setSettingUpTotp(true);
+    setTotpSecret("");
+    setTotpUri("");
+
+    try {
+      const { data, error } = await supabase.functions.invoke("setup-totp", {
+        body: { user_id: user.user_id },
+      });
+
+      if (error || data?.error) {
+        toast({ title: "Error", description: data?.error || error?.message || "Failed to setup authenticator", variant: "destructive" });
+        setTotpSetupUser(null);
+      } else {
+        setTotpSecret(data.secret);
+        setTotpUri(data.otpauth_uri);
+      }
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to setup authenticator", variant: "destructive" });
+      setTotpSetupUser(null);
+    }
+    setSettingUpTotp(false);
+  };
+
+
     if (!editingUser) return;
 
     setSaving(true);
@@ -630,6 +659,14 @@ const AdminUsers = () => {
                         title="Change username"
                       >
                         <AtSign className="w-4 h-4 text-purple-500" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setupTotp(user)}
+                        title="Setup Google Authenticator"
+                      >
+                        <QrCode className="w-4 h-4 text-emerald-500" />
                       </Button>
                       {user.role !== "super_admin" && (
                         <Button
@@ -977,6 +1014,83 @@ const AdminUsers = () => {
                   disabled={changingUsername || !newUsername.trim()}
                 >
                   {changingUsername ? "Changing..." : "Change Username"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* TOTP Setup Dialog */}
+      <Dialog open={!!totpSetupUser} onOpenChange={() => {
+        setTotpSetupUser(null);
+        setTotpSecret("");
+        setTotpUri("");
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5" />
+              Google Authenticator Setup
+            </DialogTitle>
+          </DialogHeader>
+          {totpSetupUser && (
+            <div className="space-y-4">
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="text-sm font-medium">{totpSetupUser.full_name || "User"}</p>
+                <p className="text-xs text-muted-foreground">{totpSetupUser.email || totpSetupUser.username}</p>
+              </div>
+
+              {settingUpTotp ? (
+                <p className="text-center text-muted-foreground py-4">Generating authenticator secret...</p>
+              ) : totpSecret ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted rounded-lg text-center space-y-3">
+                    <p className="text-sm font-medium text-foreground">
+                      Scan this QR code in Google Authenticator:
+                    </p>
+                    <div className="flex justify-center">
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpUri)}`}
+                        alt="TOTP QR Code"
+                        className="w-48 h-48 rounded-lg border border-border"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Or enter this key manually:
+                    </p>
+                    <div className="flex items-center gap-2 justify-center">
+                      <code className="text-sm font-mono bg-background px-3 py-1.5 rounded border border-border break-all">
+                        {totpSecret}
+                      </code>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(totpSecret);
+                          toast({ title: "Copied!", description: "Secret key copied to clipboard" });
+                        }}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    ⚠️ Share this QR code / key with the user securely. They will need it to log in.
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="flex justify-end pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setTotpSetupUser(null);
+                    setTotpSecret("");
+                    setTotpUri("");
+                  }}
+                >
+                  Close
                 </Button>
               </div>
             </div>
