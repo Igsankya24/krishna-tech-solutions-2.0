@@ -55,32 +55,29 @@ const ServiceCard = ({ id, icon: Icon, title, description, features, price }: Se
   };
 
   const handleBookNow = () => {
-    // Store selected service info in sessionStorage for chatbot
     if (id) {
       sessionStorage.setItem("chatbot_preselect_service", JSON.stringify({ id, title }));
-      // Dispatch custom event to open chatbot
       window.dispatchEvent(new CustomEvent("openChatbotBooking", { detail: { serviceId: id, serviceName: title } }));
     }
   };
 
   return (
-    <div className="group bg-card rounded-2xl p-8 border border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-lg">
-      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
-        <Icon className="w-7 h-7 text-primary" />
+    <div className="group bg-card rounded-2xl p-6 md:p-7 border border-border/50 hover:border-primary/20 transition-all duration-300 card-shadow">
+      <div className="flex items-start gap-4 mb-4">
+        <div className="w-11 h-11 rounded-xl bg-primary/8 border border-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/12 transition-colors">
+          <Icon className="w-5 h-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-display font-bold text-lg text-card-foreground mb-1 tracking-tight">{title}</h3>
+          <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">{description}</p>
+        </div>
       </div>
 
-      <h3 className="font-bold text-xl text-card-foreground mb-3">
-        {title}
-      </h3>
-      <p className="text-muted-foreground leading-relaxed">
-        {description}
-      </p>
-
       {features && features.length > 0 && (
-        <ul className="space-y-2 mt-4">
+        <ul className="space-y-1.5 mb-4 pl-[60px]">
           {features.map((feature, idx) => (
             <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              <span className="w-1 h-1 rounded-full bg-primary/60 flex-shrink-0" />
               {feature}
             </li>
           ))}
@@ -88,20 +85,20 @@ const ServiceCard = ({ id, icon: Icon, title, description, features, price }: Se
       )}
 
       {price && (
-        <div className="pt-4 mt-4 border-t border-border">
-          <span className="text-sm text-muted-foreground">Starting from</span>
-          <p className="font-bold text-2xl text-primary">{price}</p>
+        <div className="pt-3 mt-3 border-t border-border/50 pl-[60px]">
+          <span className="text-xs text-muted-foreground">Starting from</span>
+          <p className="font-display font-bold text-xl text-primary">{price}</p>
         </div>
       )}
 
-      <div className="flex flex-col gap-2 mt-4">
+      <div className="flex gap-2 mt-4 pl-[60px]">
         {projects.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="secondary" className="w-full">
-                <FolderOpen className="w-4 h-4 mr-2" />
+              <Button variant="secondary" size="sm" className="text-xs">
+                <FolderOpen className="w-3.5 h-3.5 mr-1.5" />
                 Our Work ({projects.length})
-                <ChevronDown className="w-4 h-4 ml-auto" />
+                <ChevronDown className="w-3.5 h-3.5 ml-1" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64 bg-popover border border-border shadow-lg z-50">
@@ -133,12 +130,8 @@ const ServiceCard = ({ id, icon: Icon, title, description, features, price }: Se
         )}
 
         {id && (
-          <Button 
-            onClick={handleBookNow}
-            className="w-full"
-            variant="outline"
-          >
-            <Calendar className="w-4 h-4 mr-2" />
+          <Button onClick={handleBookNow} variant="outline" size="sm" className="text-xs">
+            <Calendar className="w-3.5 h-3.5 mr-1.5" />
             Book Now
           </Button>
         )}

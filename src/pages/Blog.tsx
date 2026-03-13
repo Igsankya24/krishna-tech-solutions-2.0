@@ -158,16 +158,19 @@ const Blog = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="pt-32 pb-16 hero-section">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <span className="inline-block px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6">
+      <section className="hero-section relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-20">
+        <div className="absolute inset-0">
+          <div className="absolute top-1/3 left-1/3 w-[400px] h-[400px] bg-primary/8 rounded-full blur-[100px]" />
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-2xl">
+            <span className="text-xs font-semibold tracking-widest uppercase text-primary">
               {s.blog_badge || "Our Blog"}
             </span>
-            <h1 className="font-display text-4xl md:text-5xl font-bold text-hero-foreground mb-4">
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-hero-foreground mt-3 mb-4 tracking-tight">
               {s.blog_title || "Latest News & Articles"}
             </h1>
-            <p className="text-hero-foreground/70 text-lg">
+            <p className="text-hero-foreground/50 text-base md:text-lg max-w-lg leading-relaxed">
               {s.blog_description || "Stay updated with the latest tech tips, tutorials, and company news."}
             </p>
           </div>

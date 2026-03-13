@@ -31,48 +31,50 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/70 backdrop-blur-xl border-b border-border/50">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <Monitor className="w-5 h-5 text-primary-foreground" />
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow duration-300">
+              <Monitor className="w-4 h-4 text-primary-foreground" />
             </div>
             <div className="flex flex-col">
-              <span className="font-display font-bold text-lg text-foreground leading-tight">
+              <span className="font-display font-bold text-base text-foreground leading-tight tracking-tight">
                 {s.navbar_company_name || "Krishna Tech"}
               </span>
-              <span className="text-xs text-muted-foreground -mt-0.5">
+              <span className="text-[10px] text-muted-foreground -mt-0.5 font-medium tracking-wider uppercase">
                 {s.navbar_company_tagline || "Solutions"}
               </span>
             </div>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`relative font-medium transition-colors duration-300 ${
-                  isActive(link.path) ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  isActive(link.path) 
+                    ? "text-primary bg-primary/5" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
                 {link.name}
-                {isActive(link.path) && (
-                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full" />
-                )}
               </Link>
             ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
+          {/* Right side */}
+          <div className="hidden md:flex items-center gap-2">
             {s.navbar_show_theme !== "false" && <ThemeToggle />}
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon" className="rounded-full">
                     <Avatar className="w-8 h-8">
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                         {user.email?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -90,27 +92,29 @@ const Navbar = () => {
               </DropdownMenu>
             )}
             <Link to={s.navbar_cta_link || "/contact"}>
-              <Button variant="hero" size="default">
+              <Button size="sm" className="rounded-full px-5">
                 {s.navbar_cta_text || "Get Support"}
               </Button>
             </Link>
           </div>
 
-          <button className="md:hidden p-2 text-foreground" onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {/* Mobile toggle */}
+          <button className="md:hidden p-2 text-foreground rounded-lg hover:bg-muted transition-colors" onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
+      {/* Mobile menu */}
       {isOpen && (
-        <div className="md:hidden absolute top-20 left-0 right-0 bg-background border-b border-border animate-slide-up">
-          <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
+        <div className="md:hidden absolute top-16 left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-border animate-slide-up">
+          <div className="container mx-auto px-4 py-4 flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={() => setIsOpen(false)}
-                className={`py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
+                className={`py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive(link.path) ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
@@ -118,12 +122,12 @@ const Navbar = () => {
               </Link>
             ))}
             {user && (
-              <Button variant="ghost" className="w-full text-destructive" onClick={() => { signOut(); setIsOpen(false); }}>
+              <Button variant="ghost" className="w-full text-destructive justify-start" onClick={() => { signOut(); setIsOpen(false); }}>
                 Sign Out
               </Button>
             )}
-            <Link to={s.navbar_cta_link || "/contact"} onClick={() => setIsOpen(false)}>
-              <Button variant="hero" className="w-full mt-2">
+            <Link to={s.navbar_cta_link || "/contact"} onClick={() => setIsOpen(false)} className="mt-2">
+              <Button className="w-full rounded-full">
                 {s.navbar_cta_text || "Get Support"}
               </Button>
             </Link>
