@@ -660,7 +660,7 @@ const Admin = () => {
                     <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center mb-3">
                       <Ticket className="w-4.5 h-4.5 text-accent" />
                     </div>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalCoupons}</p>
+                    <p className="text-2xl font-bold text-foreground"><AnimatedNumber value={stats.totalCoupons} /></p>
                     <p className="text-xs text-muted-foreground mt-0.5">Coupons</p>
                   </div>
                 </button>
