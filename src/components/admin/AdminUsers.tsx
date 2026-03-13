@@ -79,6 +79,7 @@ const AdminUsers = () => {
   const [totpSecret, setTotpSecret] = useState<string>("");
   const [totpUri, setTotpUri] = useState<string>("");
   const [settingUpTotp, setSettingUpTotp] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
   const { isSuperAdmin } = useAuth();
 
