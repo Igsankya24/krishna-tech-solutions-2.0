@@ -983,7 +983,7 @@ const Admin = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6 lg:p-8 pt-16 lg:pt-8">
+        <main className="flex-1 p-6 lg:p-8 pt-14 lg:pt-8">
           {renderContent()}
         </main>
       </div>
