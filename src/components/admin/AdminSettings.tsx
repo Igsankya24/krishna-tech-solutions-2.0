@@ -74,6 +74,40 @@ const AdminSettings = () => {
     <div className="space-y-8">
       <h2 className="text-2xl font-bold text-foreground">Settings</h2>
 
+      {/* Authentication Method */}
+      <div className="bg-card rounded-xl p-6 border border-border space-y-4">
+        <EditableSectionHeader
+          title={settings.section_auth_method || "Authentication"}
+          settingKey="section_auth_method"
+          onSave={(val) => updateSetting("section_auth_method", val)}
+        />
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">Login Method</p>
+            <p className="text-xs text-muted-foreground">
+              {settings.auth_method === "authenticator"
+                ? "Users sign in with Google Authenticator PIN (no password)"
+                : "Users sign in with password"}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className={`text-xs font-medium ${settings.auth_method !== "authenticator" ? "text-foreground" : "text-muted-foreground"}`}>
+              Password
+            </span>
+            <Switch
+              checked={settings.auth_method === "authenticator"}
+              onCheckedChange={(checked) => {
+                const value = checked ? "authenticator" : "password";
+                updateSetting("auth_method", value);
+              }}
+            />
+            <span className={`text-xs font-medium ${settings.auth_method === "authenticator" ? "text-foreground" : "text-muted-foreground"}`}>
+              Authenticator
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Appointment Slot Settings */}
       <div className="bg-card rounded-xl p-6 border border-border space-y-4">
         <EditableSectionHeader
