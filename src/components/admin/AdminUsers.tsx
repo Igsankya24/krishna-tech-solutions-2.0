@@ -421,6 +421,7 @@ const AdminUsers = () => {
   };
 
 
+  const handleEditSave = async () => {
     if (!editingUser) return;
 
     setSaving(true);
