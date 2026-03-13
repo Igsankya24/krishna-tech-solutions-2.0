@@ -675,7 +675,7 @@ const Admin = () => {
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
                       <MessageSquare className="w-4.5 h-4.5 text-primary" />
                     </div>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalMessages}</p>
+                    <p className="text-2xl font-bold text-foreground"><AnimatedNumber value={stats.totalMessages} /></p>
                     <p className="text-xs text-muted-foreground mt-0.5">Messages</p>
                     {stats.unreadMessages > 0 && (
                       <span className="inline-flex items-center mt-1.5 text-[10px] font-medium bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">{stats.unreadMessages} unread</span>
