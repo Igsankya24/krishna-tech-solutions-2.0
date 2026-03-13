@@ -587,6 +587,170 @@ const AdminUsers = () => {
         </div>
       </div>
 
+      {/* User Detail Popup */}
+      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-5">
+              {/* Profile header */}
+              <div className="flex items-center gap-3">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage src={selectedUser.avatar_url || ""} />
+                  <AvatarFallback>{selectedUser.full_name?.charAt(0)?.toUpperCase() || "U"}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-foreground">{selectedUser.full_name || "No name"}</p>
+                  {selectedUser.username && <p className="text-sm text-primary">@{selectedUser.username}</p>}
+                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                    selectedUser.role === "super_admin" ? "bg-primary/10 text-primary" :
+                    selectedUser.role === "admin" ? "bg-accent/10 text-accent-foreground" :
+                    "bg-muted text-muted-foreground"
+                  }`}>
+                    {selectedUser.role === "super_admin" ? "Super Admin" : selectedUser.role === "admin" ? "Admin" : "User"}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    selectedUser.is_approved ? "bg-green-500/10 text-green-500" : "bg-yellow-500/10 text-yellow-500"
+                  }`}>
+                    {selectedUser.is_approved ? "Approved" : "Pending"}
+                  </span>
+                  {selectedUser.is_frozen && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive">Frozen</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Info grid */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>{selectedUser.phone || "No phone"}</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Mail className="w-3.5 h-3.5" />
+                  <span className="truncate">{selectedUser.email || "No email"}</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span className="truncate">{selectedUser.address || "No address"}</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>{selectedUser.login_count || 0} logins</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <CalendarCheck className="w-3.5 h-3.5" />
+                  <span>{selectedUser.appointment_count || 0} appointments</span>
+                </div>
+              </div>
+
+              {/* Role change */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-foreground">Role:</span>
+                <Select
+                  value={selectedUser.role}
+                  onValueChange={(value) => {
+                    updateRole(selectedUser.user_id, value);
+                    setSelectedUser({ ...selectedUser, role: value });
+                  }}
+                >
+                  <SelectTrigger className="w-36 h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Actions */}
+              <div className="border-t border-border pt-4">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Actions</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="justify-start gap-2"
+                    onClick={() => { setSelectedUser(null); setEditingUser(selectedUser); }}
+                  >
+                    <Edit className="w-3.5 h-3.5" /> Edit Profile
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="justify-start gap-2"
+                    onClick={() => {
+                      toggleApproval(selectedUser.user_id, selectedUser.is_approved);
+                      setSelectedUser({ ...selectedUser, is_approved: !selectedUser.is_approved });
+                    }}
+                  >
+                    {selectedUser.is_approved
+                      ? <><UserX className="w-3.5 h-3.5 text-destructive" /> Unapprove</>
+                      : <><UserCheck className="w-3.5 h-3.5 text-green-500" /> Approve</>
+                    }
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="justify-start gap-2"
+                    onClick={() => {
+                      toggleFreeze(selectedUser.user_id, selectedUser.is_frozen);
+                      setSelectedUser({ ...selectedUser, is_frozen: !selectedUser.is_frozen });
+                    }}
+                  >
+                    {selectedUser.is_frozen
+                      ? <><Unlock className="w-3.5 h-3.5 text-green-500" /> Unfreeze</>
+                      : <><Lock className="w-3.5 h-3.5 text-orange-500" /> Freeze</>
+                    }
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="justify-start gap-2"
+                    onClick={() => { setSelectedUser(null); setPasswordChangeUser(selectedUser); }}
+                  >
+                    <Key className="w-3.5 h-3.5 text-blue-500" /> Change Password
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="justify-start gap-2"
+                    onClick={() => { setSelectedUser(null); setUsernameChangeUser(selectedUser); setNewUsername(selectedUser.username || ""); }}
+                  >
+                    <AtSign className="w-3.5 h-3.5 text-purple-500" /> Change Username
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="justify-start gap-2"
+                    onClick={() => { setSelectedUser(null); setupTotp(selectedUser); }}
+                  >
+                    <QrCode className="w-3.5 h-3.5 text-emerald-500" /> Setup Authenticator
+                  </Button>
+                  {selectedUser.role !== "super_admin" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="justify-start gap-2 text-destructive hover:text-destructive"
+                      onClick={() => { setSelectedUser(null); setUserToDelete(selectedUser); setDeleteDialogOpen(true); }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Delete User
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Edit User Dialog */}
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
         <DialogContent className="max-w-md">
