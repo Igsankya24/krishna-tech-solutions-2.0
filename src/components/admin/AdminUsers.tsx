@@ -1020,6 +1020,83 @@ const AdminUsers = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* TOTP Setup Dialog */}
+      <Dialog open={!!totpSetupUser} onOpenChange={() => {
+        setTotpSetupUser(null);
+        setTotpSecret("");
+        setTotpUri("");
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5" />
+              Google Authenticator Setup
+            </DialogTitle>
+          </DialogHeader>
+          {totpSetupUser && (
+            <div className="space-y-4">
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="text-sm font-medium">{totpSetupUser.full_name || "User"}</p>
+                <p className="text-xs text-muted-foreground">{totpSetupUser.email || totpSetupUser.username}</p>
+              </div>
+
+              {settingUpTotp ? (
+                <p className="text-center text-muted-foreground py-4">Generating authenticator secret...</p>
+              ) : totpSecret ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted rounded-lg text-center space-y-3">
+                    <p className="text-sm font-medium text-foreground">
+                      Scan this QR code in Google Authenticator:
+                    </p>
+                    <div className="flex justify-center">
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpUri)}`}
+                        alt="TOTP QR Code"
+                        className="w-48 h-48 rounded-lg border border-border"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Or enter this key manually:
+                    </p>
+                    <div className="flex items-center gap-2 justify-center">
+                      <code className="text-sm font-mono bg-background px-3 py-1.5 rounded border border-border break-all">
+                        {totpSecret}
+                      </code>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(totpSecret);
+                          toast({ title: "Copied!", description: "Secret key copied to clipboard" });
+                        }}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    ⚠️ Share this QR code / key with the user securely. They will need it to log in.
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="flex justify-end pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setTotpSetupUser(null);
+                    setTotpSecret("");
+                    setTotpUri("");
+                  }}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
