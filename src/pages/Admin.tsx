@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
+import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { Button } from "@/components/ui/button";
 import { 
   LayoutDashboard, 
@@ -611,7 +612,7 @@ const Admin = () => {
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
                       <Users className="w-4.5 h-4.5 text-primary" />
                     </div>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalUsers}</p>
+                    <p className="text-2xl font-bold text-foreground"><AnimatedNumber value={stats.totalUsers} /></p>
                     <p className="text-xs text-muted-foreground mt-0.5">Total Users</p>
                   </div>
                 </button>
@@ -626,7 +627,7 @@ const Admin = () => {
                     <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center mb-3">
                       <Briefcase className="w-4.5 h-4.5 text-accent" />
                     </div>
-                    <p className="text-2xl font-bold text-foreground">{stats.activeServices}<span className="text-base text-muted-foreground font-normal">/{stats.totalServices}</span></p>
+                    <p className="text-2xl font-bold text-foreground"><AnimatedNumber value={stats.activeServices} /><span className="text-base text-muted-foreground font-normal">/<AnimatedNumber value={stats.totalServices} /></span></p>
                     <p className="text-xs text-muted-foreground mt-0.5">Active Services</p>
                   </div>
                 </button>
@@ -641,7 +642,7 @@ const Admin = () => {
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
                       <Calendar className="w-4.5 h-4.5 text-primary" />
                     </div>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalAppointments}</p>
+                    <p className="text-2xl font-bold text-foreground"><AnimatedNumber value={stats.totalAppointments} /></p>
                     <p className="text-xs text-muted-foreground mt-0.5">Appointments</p>
                     {stats.pendingAppointments > 0 && (
                       <span className="inline-flex items-center mt-1.5 text-[10px] font-medium bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 px-1.5 py-0.5 rounded-full">{stats.pendingAppointments} pending</span>
@@ -659,7 +660,7 @@ const Admin = () => {
                     <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center mb-3">
                       <Ticket className="w-4.5 h-4.5 text-accent" />
                     </div>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalCoupons}</p>
+                    <p className="text-2xl font-bold text-foreground"><AnimatedNumber value={stats.totalCoupons} /></p>
                     <p className="text-xs text-muted-foreground mt-0.5">Coupons</p>
                   </div>
                 </button>
@@ -674,7 +675,7 @@ const Admin = () => {
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
                       <MessageSquare className="w-4.5 h-4.5 text-primary" />
                     </div>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalMessages}</p>
+                    <p className="text-2xl font-bold text-foreground"><AnimatedNumber value={stats.totalMessages} /></p>
                     <p className="text-xs text-muted-foreground mt-0.5">Messages</p>
                     {stats.unreadMessages > 0 && (
                       <span className="inline-flex items-center mt-1.5 text-[10px] font-medium bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">{stats.unreadMessages} unread</span>
