@@ -7,7 +7,7 @@ interface UseIdleTimeoutProps {
 }
 
 export const useIdleTimeout = ({ timeout, onTimeout, enabled = true }: UseIdleTimeoutProps) => {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onTimeoutRef = useRef(onTimeout);
 
   // Keep callback ref updated
