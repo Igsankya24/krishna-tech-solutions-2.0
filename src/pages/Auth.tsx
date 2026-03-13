@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, Loader2, Eye, EyeOff } from "lucide-react";
+import { ShieldCheck, Loader2, Eye, EyeOff, ArrowLeft, Monitor } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   InputOTP,
@@ -64,7 +64,6 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
-  // Auto-check user existence on typing
   const checkUser = useCallback(async (value: string) => {
     if (!value.trim() || value.trim().length < 3) {
       setUserNotFound(false);
@@ -115,7 +114,6 @@ const Auth = () => {
     }
   };
 
-  // Password login
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password) return;
@@ -145,7 +143,6 @@ const Auth = () => {
       } else {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (currentUser) {
-          // Check frozen
           const { data: profileData } = await supabase
             .from("profiles")
             .select("is_frozen")
@@ -177,7 +174,6 @@ const Auth = () => {
     }
   };
 
-  // TOTP login
   const handleTotpSubmit = useCallback(async () => {
     if (totpCode.length !== 6 || isLoading) return;
     setIsLoading(true);
@@ -231,25 +227,46 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-card rounded-2xl p-8 border border-border shadow-lg">
+    <div className="min-h-screen hero-section relative overflow-hidden flex items-center justify-center px-4">
+      {/* Background effects */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute top-[30%] left-[20%] w-[400px] h-[400px] bg-primary/[0.06] rounded-full blur-[140px]" />
+        <div className="absolute bottom-[20%] right-[15%] w-[300px] h-[300px] bg-accent/[0.05] rounded-full blur-[120px]" />
+      </div>
+
+      <div className="w-full max-w-md relative z-10 animate-fade-in">
+        {/* Card */}
+        <div className="bg-card/90 backdrop-blur-xl rounded-2xl p-8 md:p-10 border border-border/50 shadow-xl">
+          {/* Logo area */}
           <div className="text-center mb-8">
-            {companyLogo && (
-              <img src={companyLogo} alt="Company Logo" className="h-16 w-auto mx-auto mb-4 object-contain" />
+            {companyLogo ? (
+              <img src={companyLogo} alt="Company Logo" className="h-14 w-auto mx-auto mb-5 object-contain" />
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-5">
+                <Monitor className="w-6 h-6 text-primary-foreground" />
+              </div>
             )}
-            <h1 className="text-2xl font-bold text-foreground mb-2">{companyName}</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl font-bold text-foreground font-display">{companyName}</h1>
+            <p className="text-muted-foreground text-sm mt-1.5">
               {step === "identity" && "Enter your username or email to sign in"}
-              {step === "password" && "Enter your password"}
-              {step === "totp" && "Enter your Google Authenticator code"}
+              {step === "password" && "Enter your password to continue"}
+              {step === "totp" && "Enter your authenticator code"}
             </p>
           </div>
 
+          {/* Step indicator */}
+          <div className="flex items-center gap-2 justify-center mb-8">
+            {["identity", "password"].map((s, idx) => (
+              <div key={s} className={`h-1 rounded-full transition-all duration-300 ${
+                step === s || (step === "totp" && idx === 1) ? "w-8 bg-primary" : step === "password" && idx === 0 ? "w-8 bg-primary/40" : "w-4 bg-border"
+              }`} />
+            ))}
+          </div>
+
           {step === "identity" && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Username or Email</label>
+                <label className="block text-xs font-medium text-foreground mb-2 uppercase tracking-wider">Username or Email</label>
                 <div className="relative">
                   <Input
                     type="text"
@@ -257,7 +274,7 @@ const Auth = () => {
                     onChange={(e) => handleLoginIdChange(e.target.value)}
                     placeholder="Enter username or email"
                     autoFocus
-                    className={userNotFound ? "border-destructive" : ""}
+                    className={`h-11 ${userNotFound ? "border-destructive focus:ring-destructive" : ""}`}
                   />
                   {isChecking && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -268,7 +285,7 @@ const Auth = () => {
                 {userNotFound && loginId.trim().length >= 3 && (
                   <p className="text-xs text-destructive mt-1.5">Account not found.</p>
                 )}
-                <p className="text-xs text-muted-foreground mt-1.5">
+                <p className="text-xs text-muted-foreground mt-2">
                   You'll be redirected automatically once found
                 </p>
               </div>
@@ -276,16 +293,16 @@ const Auth = () => {
           )}
 
           {step === "password" && (
-            <form onSubmit={handlePasswordSubmit} className="space-y-6">
-              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
+            <form onSubmit={handlePasswordSubmit} className="space-y-5">
+              <div className="flex items-center gap-2.5 p-3 bg-muted/50 rounded-xl border border-border/50">
+                <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
                 <p className="text-sm text-muted-foreground">
                   Signing in as <span className="font-medium text-foreground">{loginId}</span>
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Password</label>
+                <label className="block text-xs font-medium text-foreground mb-2 uppercase tracking-wider">Password</label>
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
@@ -295,38 +312,41 @@ const Auth = () => {
                     required
                     autoFocus
                     minLength={6}
+                    className="h-11 pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
+              <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                {isLoading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Signing in...</> : "Sign In"}
               </Button>
 
-              <Button variant="ghost" className="w-full" onClick={goBack} type="button">
-                ← Use different account
-              </Button>
+              <button type="button" onClick={goBack} className="w-full flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Use different account
+              </button>
             </form>
           )}
 
           {step === "totp" && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
+            <div className="space-y-5">
+              <div className="flex items-center gap-2.5 p-3 bg-muted/50 rounded-xl border border-border/50">
+                <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
                 <p className="text-sm text-muted-foreground">
                   Signing in as <span className="font-medium text-foreground">{loginId}</span>
                 </p>
               </div>
 
-              <div className="flex flex-col items-center gap-4">
-                <label className="block text-sm font-medium text-foreground">6-Digit Authenticator Code</label>
+              <div className="flex flex-col items-center gap-5">
+                <label className="block text-xs font-medium text-foreground uppercase tracking-wider">6-Digit Code</label>
                 <InputOTP
                   maxLength={6}
                   value={totpCode}
@@ -355,17 +375,21 @@ const Auth = () => {
                 )}
               </div>
 
-              <Button variant="ghost" className="w-full" onClick={goBack}>
-                ← Use different account
-              </Button>
+              <button type="button" onClick={goBack} className="w-full flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Use different account
+              </button>
             </div>
           )}
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">Need an account? Contact your administrator.</p>
+          <div className="mt-8 pt-6 border-t border-border/50 text-center">
+            <p className="text-xs text-muted-foreground">Need an account? Contact your administrator.</p>
           </div>
-          <div className="mt-4 text-center">
-            <a href="/" className="text-muted-foreground hover:text-foreground text-sm">← Back to Home</a>
+          <div className="mt-3 text-center">
+            <a href="/" className="text-muted-foreground hover:text-foreground text-xs transition-colors inline-flex items-center gap-1">
+              <ArrowLeft className="w-3 h-3" />
+              Back to Home
+            </a>
           </div>
         </div>
       </div>
