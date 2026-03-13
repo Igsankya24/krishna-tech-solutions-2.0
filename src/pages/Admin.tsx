@@ -853,18 +853,18 @@ const Admin = () => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-card border-r border-border transform transition-transform duration-300 flex flex-col h-screen ${
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-60 bg-card border-r border-border transform transition-transform duration-300 flex flex-col h-screen ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="p-6 border-b border-border flex-shrink-0">
-          <h1 className="text-xl font-bold text-foreground">
+        <div className="px-5 py-5 border-b border-border flex-shrink-0">
+          <h1 className="text-base font-bold text-foreground font-display">
             {isSuperAdmin ? "Admin Panel" : isAdmin ? "Control Panel" : "User Panel"}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Krishna Tech Solutions</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Krishna Tech Solutions</p>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -872,16 +872,16 @@ const Admin = () => {
                 setActiveTab(tab.id);
                 setSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                 activeTab === tab.id
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              <tab.icon className="w-5 h-5" />
-              {tab.label}
+              <tab.icon className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{tab.label}</span>
               {tab.badge && tab.badge > 0 && (
-                <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded-full">
+                <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0.5 rounded-full leading-none">
                   {tab.badge}
                 </span>
               )}
@@ -890,14 +890,17 @@ const Admin = () => {
         </nav>
 
         <div className="p-4 border-t border-border flex-shrink-0">
-          <div className="px-4">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-foreground">
-                {isSuperAdmin ? "Super Admin" : "Admin"}
-              </p>
-              {isSuperAdmin && <Shield className="w-4 h-4 text-primary" />}
+          <div className="flex items-center gap-2.5 px-2">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-bold text-primary">{user?.email?.charAt(0).toUpperCase()}</span>
             </div>
-            <p className="text-xs text-muted-foreground">{user?.email}</p>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-foreground flex items-center gap-1">
+                {isSuperAdmin ? "Super Admin" : "Admin"}
+                {isSuperAdmin && <Shield className="w-3 h-3 text-primary" />}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
+            </div>
           </div>
         </div>
       </aside>
