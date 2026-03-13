@@ -854,7 +854,7 @@ const Admin = () => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-60 bg-card border-r border-border transform transition-transform duration-300 flex flex-col h-screen ${
+        className={`fixed inset-y-0 left-0 z-40 w-60 bg-card border-r border-border transform transition-transform duration-300 flex flex-col h-screen ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -915,7 +915,7 @@ const Admin = () => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col lg:ml-60">
         {/* Top Bar with Notifications */}
         <header className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-3 flex items-center justify-end gap-2 sticky top-0 z-10">
           <ThemeToggle />
@@ -983,7 +983,7 @@ const Admin = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6 lg:p-8 pt-16 lg:pt-8">
+        <main className="flex-1 p-6 lg:p-8 pt-14 lg:pt-8">
           {renderContent()}
         </main>
       </div>
