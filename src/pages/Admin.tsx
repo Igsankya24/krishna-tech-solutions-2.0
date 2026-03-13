@@ -916,7 +916,7 @@ const Admin = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Bar with Notifications */}
-        <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-end gap-3">
+        <header className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-3 flex items-center justify-end gap-2 sticky top-0 z-10">
           <ThemeToggle />
           <Popover>
             <PopoverTrigger asChild>
