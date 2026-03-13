@@ -627,7 +627,7 @@ const Admin = () => {
                     <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center mb-3">
                       <Briefcase className="w-4.5 h-4.5 text-accent" />
                     </div>
-                    <p className="text-2xl font-bold text-foreground">{stats.activeServices}<span className="text-base text-muted-foreground font-normal">/{stats.totalServices}</span></p>
+                    <p className="text-2xl font-bold text-foreground"><AnimatedNumber value={stats.activeServices} /><span className="text-base text-muted-foreground font-normal">/<AnimatedNumber value={stats.totalServices} /></span></p>
                     <p className="text-xs text-muted-foreground mt-0.5">Active Services</p>
                   </div>
                 </button>
