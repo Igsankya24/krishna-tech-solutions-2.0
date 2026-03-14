@@ -262,14 +262,14 @@ const Admin = () => {
     }
   }, [isAdmin, isLoading, user]);
 
-  // Load sidebar orders from settings
+  // Load sidebar orders and section assignments from settings
   useEffect(() => {
     if (isSuperAdmin) {
       const loadOrders = async () => {
         const { data } = await supabase
           .from("site_settings")
           .select("key, value")
-          .in("key", ["sidebar_order", "sidebar_more_order", "sidebar_test_order"]);
+          .in("key", ["sidebar_order", "sidebar_more_order", "sidebar_test_order", "sidebar_section_assignments"]);
         if (data) {
           data.forEach(row => {
             try {
@@ -277,6 +277,7 @@ const Admin = () => {
               if (row.key === "sidebar_order") setSidebarOrder(parsed);
               if (row.key === "sidebar_more_order") setMoreOrder(parsed);
               if (row.key === "sidebar_test_order") setTestOrder(parsed);
+              if (row.key === "sidebar_section_assignments") setSectionAssignments(parsed);
             } catch { /* ignore */ }
           });
         }
@@ -290,6 +291,7 @@ const Admin = () => {
       { key: "sidebar_order", value: JSON.stringify(sidebarOrder || []), updated_at: new Date().toISOString() },
       { key: "sidebar_more_order", value: JSON.stringify(moreOrder || []), updated_at: new Date().toISOString() },
       { key: "sidebar_test_order", value: JSON.stringify(testOrder || []), updated_at: new Date().toISOString() },
+      { key: "sidebar_section_assignments", value: JSON.stringify(sectionAssignments), updated_at: new Date().toISOString() },
     ];
     for (const u of updates) {
       await supabase.from("site_settings").upsert(u, { onConflict: "key" });
@@ -299,32 +301,59 @@ const Admin = () => {
 
   const handleSidebarDragStart = (e: React.DragEvent, id: string, section: "core" | "more" | "test") => {
     setDraggedSidebarItem(id);
-    setDragSection(section);
+    setDragSourceSection(section);
     e.dataTransfer.effectAllowed = "move";
   };
 
   const handleSidebarDragOver = (e: React.DragEvent, targetId: string, tabsList: { id: string }[], section: "core" | "more" | "test") => {
     e.preventDefault();
-    if (!draggedSidebarItem || draggedSidebarItem === targetId || dragSection !== section) return;
+    if (!draggedSidebarItem || draggedSidebarItem === targetId) return;
     
-    const currentOrder = tabsList.map(t => t.id);
-    const dragIdx = currentOrder.indexOf(draggedSidebarItem);
-    const targetIdx = currentOrder.indexOf(targetId);
-    if (dragIdx === -1 || targetIdx === -1) return;
-    
-    const newOrder = [...currentOrder];
-    newOrder.splice(dragIdx, 1);
-    newOrder.splice(targetIdx, 0, draggedSidebarItem);
-    
-    if (section === "core") setSidebarOrder(newOrder);
-    else if (section === "more") setMoreOrder(newOrder);
-    else if (section === "test") setTestOrder(newOrder);
+    // If same section, reorder within
+    if (dragSourceSection === section) {
+      const currentOrder = tabsList.map(t => t.id);
+      const dragIdx = currentOrder.indexOf(draggedSidebarItem);
+      const targetIdx = currentOrder.indexOf(targetId);
+      if (dragIdx === -1 || targetIdx === -1) return;
+      
+      const newOrder = [...currentOrder];
+      newOrder.splice(dragIdx, 1);
+      newOrder.splice(targetIdx, 0, draggedSidebarItem);
+      
+      if (section === "core") setSidebarOrder(newOrder);
+      else if (section === "more") setMoreOrder(newOrder);
+      else if (section === "test") setTestOrder(newOrder);
+    }
   };
 
-  const handleSidebarDrop = (e: React.DragEvent) => {
+  const handleSectionDrop = (e: React.DragEvent, targetSection: "core" | "more" | "test") => {
     e.preventDefault();
+    if (!draggedSidebarItem) return;
+    
+    // Move item to new section if different
+    if (dragSourceSection && dragSourceSection !== targetSection) {
+      setSectionAssignments(prev => ({
+        ...prev,
+        [draggedSidebarItem]: targetSection,
+      }));
+      
+      // Remove from old section's order
+      if (dragSourceSection === "core") {
+        setSidebarOrder(prev => prev ? prev.filter(id => id !== draggedSidebarItem) : prev);
+      } else if (dragSourceSection === "more") {
+        setMoreOrder(prev => prev ? prev.filter(id => id !== draggedSidebarItem) : prev);
+      } else if (dragSourceSection === "test") {
+        setTestOrder(prev => prev ? prev.filter(id => id !== draggedSidebarItem) : prev);
+      }
+
+      toast({
+        title: "Module Moved",
+        description: `Moved to ${targetSection === "core" ? "Main" : targetSection === "more" ? "More Features" : "Test Features"}`,
+      });
+    }
+    
     setDraggedSidebarItem(null);
-    setDragSection(null);
+    setDragSourceSection(null);
   };
 
   const toggleEditMode = () => {
