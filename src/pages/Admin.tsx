@@ -707,6 +707,17 @@ const Admin = () => {
     { id: "settings" as AdminTab, label: "Settings", icon: Settings, visible: permissions.can_view_settings },
   ].filter(tab => tab.visible);
 
+  // Apply saved sidebar order
+  const sortedCoreTabs = (() => {
+    if (!sidebarOrder || sidebarOrder.length === 0) return coreTabs;
+    const orderMap = new Map(sidebarOrder.map((id, idx) => [id, idx]));
+    return [...coreTabs].sort((a, b) => {
+      const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
+      const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
+      return aIdx - bIdx;
+    });
+  })();
+
   // More Features - 25 new enterprise modules grouped by subsection
   const moreFeaturesSections = [
     {
