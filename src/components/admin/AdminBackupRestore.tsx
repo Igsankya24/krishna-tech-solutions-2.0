@@ -81,6 +81,13 @@ const formatBytes = (bytes: number) => {
 
 // ─── Sub-components ───────────────────────────────────────
 
+const SCHEDULE_OPTIONS = [
+  { value: "hourly", label: "Hourly", description: "Every hour" },
+  { value: "daily", label: "Daily", description: "Once a day at 2:00 AM UTC" },
+  { value: "weekly", label: "Weekly", description: "Every Sunday at 2:00 AM UTC" },
+  { value: "disabled", label: "Disabled", description: "No automatic backups" },
+];
+
 function BackupTab({
   isCreating,
   progress,
@@ -90,6 +97,38 @@ function BackupTab({
   progress: number;
   onCreateBackup: () => void;
 }) {
+  const [schedule, setSchedule] = useState("daily");
+  const [loadingSchedule, setLoadingSchedule] = useState(true);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "backup_schedule").maybeSingle();
+      if (data?.value) setSchedule(data.value);
+      setLoadingSchedule(false);
+    };
+    load();
+  }, []);
+
+  const saveSchedule = async (value: string) => {
+    setSchedule(value);
+    setSavingSchedule(true);
+    try {
+      await supabase.from("site_settings").upsert(
+        { key: "backup_schedule", value } as any,
+        { onConflict: "key" }
+      );
+      toast({ title: "Schedule Updated", description: `Automatic backups set to: ${value}` });
+    } catch {
+      toast({ title: "Failed to save", variant: "destructive" });
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
+
+  const activeOption = SCHEDULE_OPTIONS.find(o => o.value === schedule);
+
   return (
     <div className="space-y-4">
       <Card>
@@ -134,18 +173,52 @@ function BackupTab({
         </CardContent>
       </Card>
 
-      {/* Scheduled backup info */}
+      {/* Configurable schedule */}
       <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="pt-4">
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-primary flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-foreground">Automatic Daily Backups</p>
-              <p className="text-xs text-muted-foreground">
-                Scheduled backups run daily at 2:00 AM UTC. Backup files are stored in secure cloud storage and metadata is logged in the History tab.
-              </p>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Clock className="w-5 h-5 text-primary" />
+            Automatic Backup Schedule
+          </CardTitle>
+          <CardDescription>
+            Configure how often automatic backups run. The system will create and store backups in cloud storage automatically.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {loadingSchedule ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" /> Loading schedule...
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {SCHEDULE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => saveSchedule(option.value)}
+                  disabled={savingSchedule}
+                  className={`relative rounded-lg border p-3 text-left transition-all ${
+                    schedule === option.value
+                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                      : "border-border bg-background hover:border-primary/50"
+                  } ${savingSchedule ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                >
+                  <p className={`text-sm font-medium ${schedule === option.value ? "text-primary" : "text-foreground"}`}>
+                    {option.label}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{option.description}</p>
+                  {schedule === option.value && (
+                    <CheckCircle2 className="absolute top-2 right-2 w-4 h-4 text-primary" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+          {activeOption && schedule !== "disabled" && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5" />
+              Backup files are stored in secure cloud storage and logged in the History tab.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -381,18 +454,22 @@ function InstructionsTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-primary" />
-            Automatic Daily Backups
+            Automatic Backup Schedule
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-3">
-            The system runs an automatic backup every day at <strong className="text-foreground">2:00 AM UTC</strong>. These backups are:
+            The backup schedule is configurable from the <strong className="text-foreground">Backup</strong> tab. You can choose between:
           </p>
           <ul className="list-disc list-inside space-y-1.5 text-sm text-muted-foreground">
-            <li>Created and uploaded to cloud storage automatically</li>
-            <li>Logged in the <strong className="text-foreground">History</strong> tab with a "Scheduled" badge</li>
-            <li>Available for download at any time</li>
+            <li><strong className="text-foreground">Hourly</strong> — Runs every hour</li>
+            <li><strong className="text-foreground">Daily</strong> — Runs once a day at 2:00 AM UTC (default)</li>
+            <li><strong className="text-foreground">Weekly</strong> — Runs every Sunday at 2:00 AM UTC</li>
+            <li><strong className="text-foreground">Disabled</strong> — No automatic backups</li>
           </ul>
+          <p className="text-sm text-muted-foreground mt-3">
+            Scheduled backups are logged in the <strong className="text-foreground">History</strong> tab with a "Scheduled" badge and are available for download at any time.
+          </p>
         </CardContent>
       </Card>
 
