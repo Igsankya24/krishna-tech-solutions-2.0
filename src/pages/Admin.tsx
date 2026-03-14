@@ -802,6 +802,28 @@ const Admin = () => {
     { id: "test-section-manager" as AdminTab, label: "Section Manager", icon: Move, visible: isSuperAdmin },
   ].filter(t => t.visible);
 
+  // Flatten all more features for drag reordering
+  const allMoreItems = moreFeaturesSections.flatMap(s => s.items).filter(i => i.visible);
+  const sortedMoreItems = (() => {
+    if (!moreOrder || moreOrder.length === 0) return allMoreItems;
+    const orderMap = new Map(moreOrder.map((id, idx) => [id, idx]));
+    return [...allMoreItems].sort((a, b) => {
+      const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
+      const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
+      return aIdx - bIdx;
+    });
+  })();
+
+  const sortedTestTabs = (() => {
+    if (!testOrder || testOrder.length === 0) return testFeaturesTabs;
+    const orderMap = new Map(testOrder.map((id, idx) => [id, idx]));
+    return [...testFeaturesTabs].sort((a, b) => {
+      const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
+      const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
+      return aIdx - bIdx;
+    });
+  })();
+
   const allMoreFeatureIds = moreFeaturesSections.flatMap(s => s.items.map(i => i.id));
   const allTestFeatureIds = testFeaturesTabs.map(t => t.id);
 
