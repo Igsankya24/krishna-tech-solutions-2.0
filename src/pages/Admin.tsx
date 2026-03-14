@@ -36,7 +36,28 @@ import {
   Star,
   Megaphone,
   CreditCard,
-  DatabaseBackup
+  DatabaseBackup,
+  Search,
+  History,
+  Activity,
+  Heart,
+  Zap,
+  FolderOpenDot,
+  ShieldCheck,
+  Brain,
+  StickyNote,
+  ToggleLeft,
+  Clock,
+  Download,
+  Upload,
+  BarChart,
+  Palette,
+  Sparkles,
+  Languages,
+  ShieldCheck as ShieldCheckIcon,
+  FileBarChart,
+  MessageCircle,
+  Cog,
 } from "lucide-react";
 import AdminServices from "@/components/admin/AdminServices";
 import AdminSettings from "@/components/admin/AdminSettings";
@@ -63,6 +84,27 @@ import AdminBlogAds from "@/components/admin/AdminBlogAds";
 import AdminTestimonials from "@/components/admin/AdminTestimonials";
 import AdminPaymentGateway from "@/components/admin/AdminPaymentGateway";
 import AdminBackupRestore from "@/components/admin/AdminBackupRestore";
+import AdminSmartSearch from "@/components/admin/AdminSmartSearch";
+import AdminAuditLogs from "@/components/admin/AdminAuditLogs";
+import AdminSystemHealth from "@/components/admin/AdminSystemHealth";
+import AdminCRM from "@/components/admin/AdminCRM";
+import AdminAutomation from "@/components/admin/AdminAutomation";
+import AdminFileManager from "@/components/admin/AdminFileManager";
+import AdminRoleMatrix from "@/components/admin/AdminRoleMatrix";
+import AdminAIInsights from "@/components/admin/AdminAIInsights";
+import AdminNotes from "@/components/admin/AdminNotes";
+import AdminFeatureFlags from "@/components/admin/AdminFeatureFlags";
+import AdminScheduledJobs from "@/components/admin/AdminScheduledJobs";
+import AdminDataExport from "@/components/admin/AdminDataExport";
+import AdminDataImport from "@/components/admin/AdminDataImport";
+import AdminApiUsage from "@/components/admin/AdminApiUsage";
+import AdminQuickActions from "@/components/admin/AdminQuickActions";
+import AdminSecurityDashboard from "@/components/admin/AdminSecurityDashboard";
+import AdminBackupChecker from "@/components/admin/AdminBackupChecker";
+import AdminReportsGenerator from "@/components/admin/AdminReportsGenerator";
+import AdminFeedbackDashboard from "@/components/admin/AdminFeedbackDashboard";
+import AdminSystemSettings from "@/components/admin/AdminSystemSettings";
+import AdminMultiLanguage from "@/components/admin/AdminMultiLanguage";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/services/database";
 import { useToast } from "@/hooks/use-toast";
@@ -81,7 +123,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type AdminTab = "dashboard" | "analytics" | "traffic" | "appointments" | "users" | "services" | "service-projects" | "coupons" | "messages" | "bot" | "settings" | "profile" | "permissions" | "deletion-requests" | "customization" | "user-permissions" | "user-access" | "invoices" | "technicians" | "api-keys" | "team-members" | "blog" | "blog-ads" | "testimonials" | "payment-gateway" | "backup-restore";
+type AdminTab = "dashboard" | "analytics" | "traffic" | "appointments" | "users" | "services" | "service-projects" | "coupons" | "messages" | "bot" | "settings" | "profile" | "permissions" | "deletion-requests" | "customization" | "user-permissions" | "user-access" | "invoices" | "technicians" | "api-keys" | "team-members" | "blog" | "blog-ads" | "testimonials" | "payment-gateway" | "backup-restore"
+  | "smart-search" | "audit-logs" | "system-health" | "crm" | "automation" | "file-manager" | "role-matrix" | "ai-insights" | "admin-notes" | "feature-flags" | "scheduled-jobs" | "data-export" | "data-import" | "api-usage" | "quick-actions" | "security-dashboard" | "backup-checker" | "reports" | "feedback" | "system-settings" | "multi-language";
 
 interface DashboardStats {
   totalUsers: number;
@@ -553,31 +596,62 @@ const Admin = () => {
   }
 
 
-  // Filter tabs based on permissions
+  // Filter tabs based on permissions - organized into sections
   const allTabs = [
+    // Core
     { id: "dashboard" as AdminTab, label: "Dashboard", icon: LayoutDashboard, visible: true },
+    { id: "quick-actions" as AdminTab, label: "Quick Actions", icon: Sparkles, visible: true },
+    { id: "smart-search" as AdminTab, label: "Smart Search", icon: Search, visible: true },
+    // Analytics & Monitoring
     { id: "analytics" as AdminTab, label: "Analytics", icon: BarChart3, visible: isSuperAdmin },
     { id: "traffic" as AdminTab, label: "Traffic", icon: Globe, visible: isSuperAdmin },
+    { id: "ai-insights" as AdminTab, label: "AI Insights", icon: Brain, visible: isSuperAdmin },
+    { id: "system-health" as AdminTab, label: "System Health", icon: Activity, visible: isSuperAdmin },
+    { id: "api-usage" as AdminTab, label: "API Usage", icon: BarChart, visible: isSuperAdmin },
+    { id: "feedback" as AdminTab, label: "Customer Feedback", icon: MessageCircle, visible: isSuperAdmin },
+    // Operations
     { id: "services" as AdminTab, label: "Services", icon: Briefcase, visible: permissions.can_view_services },
     { id: "service-projects" as AdminTab, label: "Service Projects", icon: FolderOpen, visible: permissions.can_view_services },
     { id: "appointments" as AdminTab, label: "Appointments", icon: Calendar, visible: permissions.can_view_appointments },
     { id: "invoices" as AdminTab, label: "Invoices", icon: FileText, visible: permissions.can_view_appointments },
     { id: "technicians" as AdminTab, label: "Technicians", icon: Wrench, visible: permissions.can_view_appointments },
     { id: "messages" as AdminTab, label: "Messages", icon: MessageSquare, badge: stats.unreadMessages > 0 ? stats.unreadMessages : undefined, visible: permissions.can_view_messages },
+    { id: "crm" as AdminTab, label: "Customer CRM", icon: Heart, visible: isSuperAdmin },
+    // Users
     { id: "users" as AdminTab, label: "Users", icon: Users, visible: permissions.can_view_users },
     { id: "coupons" as AdminTab, label: "Coupons", icon: Ticket, visible: permissions.can_view_coupons },
     { id: "user-access" as AdminTab, label: "User Access", icon: Lock, visible: permissions.can_manage_users },
+    // Content
     { id: "blog" as AdminTab, label: "Blog Posts", icon: Newspaper, visible: isSuperAdmin },
     { id: "blog-ads" as AdminTab, label: "Blog Ads", icon: Megaphone, visible: isSuperAdmin },
     { id: "testimonials" as AdminTab, label: "Testimonials", icon: Star, visible: isSuperAdmin },
+    { id: "file-manager" as AdminTab, label: "File Manager", icon: FolderOpenDot, visible: isSuperAdmin },
+    // Configuration
     { id: "bot" as AdminTab, label: "Bot Settings", icon: Bot, visible: permissions.can_view_settings },
     { id: "customization" as AdminTab, label: "Website Customization", icon: Paintbrush, visible: isSuperAdmin },
+    { id: "feature-flags" as AdminTab, label: "Feature Flags", icon: ToggleLeft, visible: isSuperAdmin },
+    { id: "automation" as AdminTab, label: "Automation Rules", icon: Zap, visible: isSuperAdmin },
+    { id: "multi-language" as AdminTab, label: "Multi-Language", icon: Languages, visible: isSuperAdmin },
+    // Team & Security
     { id: "team-members" as AdminTab, label: "Team Members", icon: UserCheck, visible: isSuperAdmin },
     { id: "user-permissions" as AdminTab, label: "User Roles", icon: UserCog, visible: isSuperAdmin },
     { id: "permissions" as AdminTab, label: "Admin Permissions", icon: Shield, visible: isSuperAdmin },
+    { id: "role-matrix" as AdminTab, label: "Permission Matrix", icon: ShieldCheck, visible: isSuperAdmin },
+    { id: "security-dashboard" as AdminTab, label: "Security", icon: ShieldCheckIcon, visible: isSuperAdmin },
+    // System
     { id: "api-keys" as AdminTab, label: "API Keys", icon: Key, visible: isSuperAdmin },
     { id: "backup-restore" as AdminTab, label: "Backup & Restore", icon: DatabaseBackup, visible: isSuperAdmin },
+    { id: "backup-checker" as AdminTab, label: "Backup Integrity", icon: DatabaseBackup, visible: isSuperAdmin },
+    { id: "scheduled-jobs" as AdminTab, label: "Scheduled Jobs", icon: Clock, visible: isSuperAdmin },
+    { id: "audit-logs" as AdminTab, label: "Audit Logs", icon: History, visible: isSuperAdmin },
+    { id: "admin-notes" as AdminTab, label: "Admin Notes", icon: StickyNote, visible: true },
+    // Data
+    { id: "data-export" as AdminTab, label: "Data Export", icon: Download, visible: isSuperAdmin },
+    { id: "data-import" as AdminTab, label: "Data Import", icon: Upload, visible: isSuperAdmin },
+    { id: "reports" as AdminTab, label: "Reports Generator", icon: FileBarChart, visible: isSuperAdmin },
+    // Other
     { id: "payment-gateway" as AdminTab, label: "Payment Gateway", icon: CreditCard, visible: isSuperAdmin },
+    { id: "system-settings" as AdminTab, label: "System Settings", icon: Cog, visible: isSuperAdmin },
     { id: "deletion-requests" as AdminTab, label: "Deletion Requests", icon: Trash2, badge: stats.pendingDeletionRequests > 0 ? stats.pendingDeletionRequests : undefined, visible: isSuperAdmin },
     { id: "profile" as AdminTab, label: "My Profile", icon: UserCircle, visible: true },
     { id: "settings" as AdminTab, label: "Settings", icon: Settings, visible: permissions.can_view_settings },
@@ -842,6 +916,49 @@ const Admin = () => {
         return <AdminProfileSettings />;
       case "settings":
         return <AdminSettings />;
+      // New feature cases
+      case "smart-search":
+        return <AdminSmartSearch onNavigate={(tab) => setActiveTab(tab as AdminTab)} />;
+      case "audit-logs":
+        return isSuperAdmin ? <AdminAuditLogs /> : null;
+      case "system-health":
+        return isSuperAdmin ? <AdminSystemHealth /> : null;
+      case "crm":
+        return isSuperAdmin ? <AdminCRM /> : null;
+      case "automation":
+        return isSuperAdmin ? <AdminAutomation /> : null;
+      case "file-manager":
+        return isSuperAdmin ? <AdminFileManager /> : null;
+      case "role-matrix":
+        return isSuperAdmin ? <AdminRoleMatrix /> : null;
+      case "ai-insights":
+        return isSuperAdmin ? <AdminAIInsights /> : null;
+      case "admin-notes":
+        return <AdminNotes />;
+      case "feature-flags":
+        return isSuperAdmin ? <AdminFeatureFlags /> : null;
+      case "scheduled-jobs":
+        return isSuperAdmin ? <AdminScheduledJobs /> : null;
+      case "data-export":
+        return isSuperAdmin ? <AdminDataExport /> : null;
+      case "data-import":
+        return isSuperAdmin ? <AdminDataImport /> : null;
+      case "api-usage":
+        return isSuperAdmin ? <AdminApiUsage /> : null;
+      case "quick-actions":
+        return <AdminQuickActions onNavigate={(tab) => setActiveTab(tab as AdminTab)} />;
+      case "security-dashboard":
+        return isSuperAdmin ? <AdminSecurityDashboard /> : null;
+      case "backup-checker":
+        return isSuperAdmin ? <AdminBackupChecker /> : null;
+      case "reports":
+        return isSuperAdmin ? <AdminReportsGenerator /> : null;
+      case "feedback":
+        return isSuperAdmin ? <AdminFeedbackDashboard /> : null;
+      case "system-settings":
+        return isSuperAdmin ? <AdminSystemSettings /> : null;
+      case "multi-language":
+        return isSuperAdmin ? <AdminMultiLanguage /> : null;
       default:
         return null;
     }
