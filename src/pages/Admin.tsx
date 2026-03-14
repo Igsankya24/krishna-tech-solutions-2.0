@@ -1377,6 +1377,11 @@ const Admin = () => {
 
               {testFeaturesOpen && (
                 <div className="mt-1 space-y-0.5" onDrop={(e) => handleSectionDrop(e, "test")} onDragOver={(e) => e.preventDefault()}>
+                  {editMode && draggedSidebarItem && dragSourceSection !== "test" && (
+                    <div className="py-2 text-center text-[10px] font-medium text-yellow-600 dark:text-yellow-400 border-2 border-dashed border-yellow-500/30 rounded-lg bg-yellow-500/5">
+                      ↓ Drop here for Test Features
+                    </div>
+                  )}
                   {sortedTestTabs.map((item) => (
                     <button
                       key={item.id}
