@@ -256,6 +256,66 @@ const Admin = () => {
     }
   }, [isAdmin, isLoading, user]);
 
+  // Load sidebar order from settings
+  useEffect(() => {
+    if (isSuperAdmin) {
+      const loadSidebarOrder = async () => {
+        const { data } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "sidebar_order")
+          .maybeSingle();
+        if (data?.value) {
+          try {
+            setSidebarOrder(JSON.parse(data.value));
+          } catch { /* ignore parse errors */ }
+        }
+      };
+      loadSidebarOrder();
+    }
+  }, [isSuperAdmin]);
+
+  const saveSidebarOrder = async (order: string[]) => {
+    setSidebarOrder(order);
+    await supabase
+      .from("site_settings")
+      .upsert({ key: "sidebar_order", value: JSON.stringify(order), updated_at: new Date().toISOString() }, { onConflict: "key" });
+    toast({ title: "Layout Saved", description: "Sidebar order has been saved." });
+  };
+
+  const handleSidebarDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedSidebarItem(id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleSidebarDragOver = (e: React.DragEvent, targetId: string, tabsList: { id: string }[]) => {
+    e.preventDefault();
+    if (!draggedSidebarItem || draggedSidebarItem === targetId) return;
+    
+    const currentOrder = tabsList.map(t => t.id);
+    const dragIdx = currentOrder.indexOf(draggedSidebarItem);
+    const targetIdx = currentOrder.indexOf(targetId);
+    if (dragIdx === -1 || targetIdx === -1) return;
+    
+    const newOrder = [...currentOrder];
+    newOrder.splice(dragIdx, 1);
+    newOrder.splice(targetIdx, 0, draggedSidebarItem);
+    setSidebarOrder(newOrder);
+  };
+
+  const handleSidebarDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDraggedSidebarItem(null);
+  };
+
+  const toggleEditMode = () => {
+    if (editMode && sidebarOrder) {
+      // Saving on exit
+      saveSidebarOrder(sidebarOrder);
+    }
+    setEditMode(!editMode);
+  };
+
   useEffect(() => {
     if (isAdmin) {
       fetchStats();
