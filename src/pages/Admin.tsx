@@ -188,6 +188,7 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [moreFeaturesOpen, setMoreFeaturesOpen] = useState(false);
+  const [testFeaturesOpen, setTestFeaturesOpen] = useState(false);
   const [selectedAppointmentForInvoice, setSelectedAppointmentForInvoice] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({ 
     totalUsers: 0, 
