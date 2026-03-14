@@ -1287,6 +1287,11 @@ const Admin = () => {
 
             {moreFeaturesOpen && (
               <div className="mt-1 space-y-0.5" onDrop={(e) => handleSectionDrop(e, "more")} onDragOver={(e) => e.preventDefault()}>
+                {editMode && draggedSidebarItem && dragSourceSection !== "more" && (
+                  <div className="py-2 text-center text-[10px] font-medium text-accent border-2 border-dashed border-accent/30 rounded-lg bg-accent/5">
+                    ↓ Drop here for More Features
+                  </div>
+                )}
                 {editMode ? (
                   // Flat draggable list in edit mode
                   sortedMoreItems.map((item) => (
