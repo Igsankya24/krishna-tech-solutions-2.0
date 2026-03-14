@@ -1015,6 +1015,19 @@ const Admin = () => {
         return isSuperAdmin ? <AdminSystemSettings /> : null;
       case "multi-language":
         return isSuperAdmin ? <AdminMultiLanguage /> : null;
+      // Test Features
+      case "test-command-palette":
+        return isSuperAdmin ? <TestCommandPalette onNavigate={(tab) => setActiveTab(tab as AdminTab)} /> : null;
+      case "test-realtime-dashboard":
+        return isSuperAdmin ? <TestRealtimeDashboard /> : null;
+      case "test-ai-assistant":
+        return isSuperAdmin ? <TestAIAssistant /> : null;
+      case "test-smart-alerts":
+        return isSuperAdmin ? <TestSmartAlerts /> : null;
+      case "test-performance-monitor":
+        return isSuperAdmin ? <TestPerformanceMonitor /> : null;
+      case "test-section-manager":
+        return isSuperAdmin ? <TestSectionManager /> : null;
       default:
         return null;
     }
