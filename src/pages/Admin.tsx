@@ -1116,7 +1116,7 @@ const Admin = () => {
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="lg:hidden fixed top-3.5 left-3.5 z-50 p-2.5 bg-card rounded-xl border border-border shadow-sm"
+          className="md:hidden fixed top-3.5 left-3.5 z-50 p-2.5 bg-card rounded-xl border border-border shadow-sm"
           aria-label="Toggle sidebar"
         >
           <Menu className="w-5 h-5" />
@@ -1126,7 +1126,7 @@ const Admin = () => {
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-40 w-[15.5rem] bg-card border-r border-border transform transition-transform duration-300 ease-out flex flex-col ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
         <div className="px-5 py-4 border-b border-border flex-shrink-0">
@@ -1292,13 +1292,13 @@ const Admin = () => {
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Main Content */}
-      <div className="lg:ml-[15.5rem] flex flex-col min-h-screen">
+      <div className="md:ml-[15.5rem] flex flex-col min-h-screen">
         {/* Top Bar */}
         <header className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-3 flex items-center justify-end gap-2 sticky top-0 z-20">
           <ThemeToggle />
