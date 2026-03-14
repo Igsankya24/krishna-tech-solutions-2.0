@@ -1197,6 +1197,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_blog_views: { Args: { post_id: string }; Returns: undefined }
       sanitize_html: { Args: { input_text: string }; Returns: string }
     }
     Enums: {
