@@ -1365,7 +1365,7 @@ const Admin = () => {
               </button>
 
               {testFeaturesOpen && (
-                <div className="mt-1 space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
+                <div className="mt-1 space-y-0.5" onDrop={(e) => handleSectionDrop(e, "test")} onDragOver={(e) => e.preventDefault()}>
                   {sortedTestTabs.map((item) => (
                     <button
                       key={item.id}
