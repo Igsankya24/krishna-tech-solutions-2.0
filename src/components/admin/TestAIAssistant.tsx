@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import ReactMarkdown from "react-markdown";
 
 interface Message {
   id: string;
@@ -20,6 +19,38 @@ const suggestions = [
 ];
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-chat`;
+
+/** Lightweight markdown to HTML (bold, italic, bullets, code, headings) */
+const renderMarkdown = (text: string) => {
+  let html = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    // code blocks
+    .replace(/```[\s\S]*?```/g, (m) => {
+      const code = m.slice(3, -3).replace(/^\w*\n/, "");
+      return `<pre class="bg-muted rounded-lg p-3 my-2 overflow-x-auto text-xs"><code>${code}</code></pre>`;
+    })
+    // inline code
+    .replace(/`([^`]+)`/g, '<code class="bg-muted px-1.5 py-0.5 rounded text-xs">$1</code>')
+    // bold
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    // italic
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    // headings
+    .replace(/^### (.+)$/gm, '<h4 class="font-semibold mt-2 mb-1">$1</h4>')
+    .replace(/^## (.+)$/gm, '<h3 class="font-semibold text-base mt-3 mb-1">$1</h3>')
+    // unordered lists
+    .replace(/^[-•] (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
+    // numbered lists
+    .replace(/^\d+\. (.+)$/gm, '<li class="ml-4 list-decimal">$1</li>')
+    // paragraphs (double newline)
+    .replace(/\n\n/g, '</p><p class="mt-2">')
+    // single newline
+    .replace(/\n/g, "<br/>");
+
+  return `<p>${html}</p>`;
+};
 
 const TestAIAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -96,7 +127,6 @@ const TestAIAssistant = () => {
       }
     }
 
-    // Finalize the streaming message with a real ID
     setMessages((prev) =>
       prev.map((m) => m.id === "streaming" ? { ...m, id: Date.now().toString() } : m)
     );
@@ -138,10 +168,8 @@ const TestAIAssistant = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chat Area */}
         <Card className="lg:col-span-2">
           <CardContent className="p-0 flex flex-col" style={{ height: "500px" }}>
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -153,9 +181,10 @@ const TestAIAssistant = () => {
                     }`}
                   >
                     {msg.role === "assistant" ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
+                      <div
+                        className="[&_strong]:font-semibold [&_em]:italic [&_pre]:my-2 [&_li]:my-0.5 [&_h3]:text-base [&_h4]:text-sm"
+                        dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+                      />
                     ) : (
                       msg.content
                     )}
@@ -172,12 +201,8 @@ const TestAIAssistant = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
             <div className="border-t border-border p-4">
-              <form
-                onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                className="flex gap-2"
-              >
+              <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
                 <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -197,7 +222,6 @@ const TestAIAssistant = () => {
           </CardContent>
         </Card>
 
-        {/* Suggestions Sidebar */}
         <div className="space-y-4">
           <Card>
             <CardHeader>
@@ -226,7 +250,7 @@ const TestAIAssistant = () => {
             <CardContent className="p-4 text-center">
               <Badge className="mb-2">Lovable AI</Badge>
               <p className="text-xs text-muted-foreground mt-2">
-                Powered by Lovable AI with real-time streaming responses. Ask anything about your admin dashboard.
+                Powered by Lovable AI with real-time streaming responses.
               </p>
             </CardContent>
           </Card>
