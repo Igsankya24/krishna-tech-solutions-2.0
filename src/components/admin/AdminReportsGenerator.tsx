@@ -82,9 +82,9 @@ const AdminReportsGenerator = () => {
 
       const reportName = REPORT_TYPES.find(r => r.id === reportType)?.label || "report";
       if (format === "excel") {
-        exportToExcel(data, columns, reportName);
+        exportToExcel(data, reportName);
       } else {
-        exportToPDF(data, columns, reportName);
+        exportToPDF(data, reportName, reportName);
       }
 
       toast({ title: "Report generated", description: `${reportName} with ${data.length} records` });

@@ -57,15 +57,13 @@ const AdminDataExport = () => {
       } else if (format === "excel") {
         for (const [table, data] of Object.entries(allData)) {
           if (data.length > 0) {
-            const columns = Object.keys(data[0]);
-            exportToExcel(data, columns, `${table}-export`);
+            exportToExcel(data, `${table}-export`);
           }
         }
       } else if (format === "pdf") {
         for (const [table, data] of Object.entries(allData)) {
           if (data.length > 0) {
-            const columns = Object.keys(data[0]);
-            exportToPDF(data, columns, `${table}-export`);
+            exportToPDF(data, `${table}-export`, table);
           }
         }
       }
