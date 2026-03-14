@@ -8,7 +8,7 @@ interface SiteMetadata {
 
 export const useSiteMetadata = () => {
   const [metadata, setMetadata] = useState<SiteMetadata>({
-    siteTitle: "Krishna Tech Solutions",
+    siteTitle: "Krishna Tech Solutions 2.0",
     faviconUrl: "/favicon.ico",
   });
 
