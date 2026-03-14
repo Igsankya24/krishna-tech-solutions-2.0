@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { Brain, Send, Sparkles, Lightbulb, BarChart3, Shield, Zap } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Brain, Send, Sparkles, Lightbulb, BarChart3, Shield, Zap, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
-  timestamp: Date;
 }
 
 const suggestions = [
@@ -18,45 +19,112 @@ const suggestions = [
   { icon: Zap, label: "Automate repetitive tasks", color: "text-primary" },
 ];
 
-const mockResponses: Record<string, string> = {
-  default: "I'm your AI Admin Assistant. I can help you analyze data, generate reports, monitor system health, and suggest optimizations. What would you like to explore?",
-  analytics: "📊 **Today's Summary:**\n- **42** new users registered\n- **128** appointments booked\n- **96%** system uptime\n- Revenue is **up 12%** from yesterday\n\nWould you like me to generate a detailed report?",
-  security: "🔒 **Security Audit Results:**\n- All RLS policies are active ✅\n- No failed login attempts in last hour ✅\n- 2 users with outdated sessions ⚠️\n- API rate limits are within bounds ✅\n\nOverall security score: **94/100**",
-  performance: "⚡ **Performance Insights:**\n1. Database queries averaging **45ms** — Good\n2. Consider adding indexes on `appointments.appointment_date`\n3. Image compression could save **~30%** bandwidth\n4. Cache frequently accessed site settings\n\nShall I create optimization tasks?",
-  automate: "🤖 **Automation Suggestions:**\n1. Auto-archive appointments older than 90 days\n2. Schedule weekly backup at off-peak hours\n3. Auto-notify users of upcoming appointments\n4. Generate monthly revenue reports automatically\n\nWant me to set up any of these?",
-};
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-chat`;
 
 const TestAIAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([
-    { id: "1", role: "assistant", content: mockResponses.default, timestamp: new Date() },
+    { id: "1", role: "assistant", content: "👋 I'm your **AI Admin Assistant**, powered by Lovable AI. I can help you analyze data, generate reports, monitor system health, and suggest optimizations.\n\nWhat would you like to explore?" },
   ]);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
-  const handleSend = (text?: string) => {
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const streamChat = async (allMessages: Message[]) => {
+    const apiMessages = allMessages.map((m) => ({ role: m.role, content: m.content }));
+
+    const resp = await fetch(CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ messages: apiMessages }),
+    });
+
+    if (!resp.ok) {
+      const errorData = await resp.json().catch(() => ({}));
+      throw new Error(errorData.error || `Request failed (${resp.status})`);
+    }
+
+    if (!resp.body) throw new Error("No response body");
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let textBuffer = "";
+    let assistantSoFar = "";
+    let streamDone = false;
+
+    while (!streamDone) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      textBuffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (line.startsWith(":") || line.trim() === "") continue;
+        if (!line.startsWith("data: ")) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === "[DONE]") { streamDone = true; break; }
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) {
+            assistantSoFar += content;
+            setMessages((prev) => {
+              const last = prev[prev.length - 1];
+              if (last?.role === "assistant" && last.id === "streaming") {
+                return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
+              }
+              return [...prev, { id: "streaming", role: "assistant", content: assistantSoFar }];
+            });
+          }
+        } catch {
+          textBuffer = line + "\n" + textBuffer;
+          break;
+        }
+      }
+    }
+
+    // Finalize the streaming message with a real ID
+    setMessages((prev) =>
+      prev.map((m) => m.id === "streaming" ? { ...m, id: Date.now().toString() } : m)
+    );
+  };
+
+  const handleSend = async (text?: string) => {
     const messageText = text || input;
-    if (!messageText.trim()) return;
+    if (!messageText.trim() || isStreaming) return;
 
-    const userMsg: Message = { id: Date.now().toString(), role: "user", content: messageText, timestamp: new Date() };
-    setMessages((prev) => [...prev, userMsg]);
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content: messageText };
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInput("");
-    setIsTyping(true);
+    setIsStreaming(true);
 
-    // Mock AI response
-    setTimeout(() => {
-      const lowerText = messageText.toLowerCase();
-      let response = mockResponses.default;
-      if (lowerText.includes("analytic") || lowerText.includes("summary")) response = mockResponses.analytics;
-      else if (lowerText.includes("security") || lowerText.includes("audit")) response = mockResponses.security;
-      else if (lowerText.includes("performance") || lowerText.includes("improv")) response = mockResponses.performance;
-      else if (lowerText.includes("automat") || lowerText.includes("task")) response = mockResponses.automate;
-
+    try {
+      await streamChat(updatedMessages);
+    } catch (e) {
+      console.error("AI chat error:", e);
+      const errorMessage = e instanceof Error ? e.message : "Unknown error";
+      toast({ title: "AI Error", description: errorMessage, variant: "destructive" });
       setMessages((prev) => [
         ...prev,
-        { id: (Date.now() + 1).toString(), role: "assistant", content: response, timestamp: new Date() },
+        { id: (Date.now() + 1).toString(), role: "assistant", content: `⚠️ Sorry, I encountered an error: ${errorMessage}` },
       ]);
-      setIsTyping(false);
-    }, 1200);
+    } finally {
+      setIsStreaming(false);
+    }
   };
 
   return (
@@ -66,7 +134,7 @@ const TestAIAssistant = () => {
           <Brain className="w-6 h-6 text-primary" />
           AI Admin Assistant
         </h2>
-        <p className="text-muted-foreground mt-1">Your intelligent admin co-pilot</p>
+        <p className="text-muted-foreground mt-1">Your intelligent admin co-pilot — powered by Lovable AI</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -78,27 +146,30 @@ const TestAIAssistant = () => {
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm whitespace-pre-line ${
+                    className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
                       msg.role === "user"
                         ? "bg-primary text-primary-foreground rounded-br-md"
                         : "bg-muted text-foreground rounded-bl-md"
                     }`}
                   >
-                    {msg.content}
+                    {msg.role === "assistant" ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      msg.content
+                    )}
                   </div>
                 </div>
               ))}
-              {isTyping && (
+              {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
                 <div className="flex justify-start">
                   <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </div>
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                   </div>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Input */}
@@ -112,13 +183,14 @@ const TestAIAssistant = () => {
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask the AI assistant..."
                   className="flex-1"
+                  disabled={isStreaming}
                 />
                 <button
                   type="submit"
-                  disabled={!input.trim() || isTyping}
+                  disabled={!input.trim() || isStreaming}
                   className="p-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
                 >
-                  <Send className="w-4 h-4" />
+                  {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
               </form>
             </div>
@@ -140,7 +212,8 @@ const TestAIAssistant = () => {
                 <button
                   key={i}
                   onClick={() => handleSend(s.label)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
+                  disabled={isStreaming}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left disabled:opacity-50"
                 >
                   <s.icon className={`w-4 h-4 ${s.color}`} />
                   <span className="text-sm text-foreground">{s.label}</span>
@@ -151,9 +224,9 @@ const TestAIAssistant = () => {
 
           <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
             <CardContent className="p-4 text-center">
-              <Badge className="mb-2">Experimental</Badge>
+              <Badge className="mb-2">Lovable AI</Badge>
               <p className="text-xs text-muted-foreground mt-2">
-                This AI assistant uses mock responses for testing. Connect to Lovable AI for real intelligence.
+                Powered by Lovable AI with real-time streaming responses. Ask anything about your admin dashboard.
               </p>
             </CardContent>
           </Card>
