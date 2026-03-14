@@ -454,18 +454,22 @@ function InstructionsTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-primary" />
-            Automatic Daily Backups
+            Automatic Backup Schedule
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-3">
-            The system runs an automatic backup every day at <strong className="text-foreground">2:00 AM UTC</strong>. These backups are:
+            The backup schedule is configurable from the <strong className="text-foreground">Backup</strong> tab. You can choose between:
           </p>
           <ul className="list-disc list-inside space-y-1.5 text-sm text-muted-foreground">
-            <li>Created and uploaded to cloud storage automatically</li>
-            <li>Logged in the <strong className="text-foreground">History</strong> tab with a "Scheduled" badge</li>
-            <li>Available for download at any time</li>
+            <li><strong className="text-foreground">Hourly</strong> — Runs every hour</li>
+            <li><strong className="text-foreground">Daily</strong> — Runs once a day at 2:00 AM UTC (default)</li>
+            <li><strong className="text-foreground">Weekly</strong> — Runs every Sunday at 2:00 AM UTC</li>
+            <li><strong className="text-foreground">Disabled</strong> — No automatic backups</li>
           </ul>
+          <p className="text-sm text-muted-foreground mt-3">
+            Scheduled backups are logged in the <strong className="text-foreground">History</strong> tab with a "Scheduled" badge and are available for download at any time.
+          </p>
         </CardContent>
       </Card>
 
