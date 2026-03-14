@@ -1135,6 +1135,47 @@ const Admin = () => {
               </div>
             )}
           </div>
+
+          {/* Test Features - super admin only */}
+          {isSuperAdmin && testFeaturesTabs.length > 0 && (
+            <div className="mt-4 border-t border-border pt-3">
+              <button
+                onClick={() => setTestFeaturesOpen(!testFeaturesOpen)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-semibold text-foreground hover:bg-muted transition-all duration-150"
+              >
+                <Beaker className="w-4 h-4 flex-shrink-0 text-yellow-500" />
+                <span className="flex-1 text-left">Test Features</span>
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 mr-1">BETA</Badge>
+                {testFeaturesOpen
+                  ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                }
+              </button>
+
+              {testFeaturesOpen && (
+                <div className="mt-1 space-y-0.5">
+                  {testFeaturesTabs.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 ${
+                        activeTab === item.id
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                      aria-current={activeTab === item.id ? "page" : undefined}
+                    >
+                      <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         <div className="p-3 border-t border-border flex-shrink-0">
