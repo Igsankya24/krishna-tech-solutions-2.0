@@ -68,6 +68,8 @@ import {
   BellRing,
   Gauge,
   Move,
+  GripVertical,
+  Pencil,
 } from "lucide-react";
 import AdminServices from "@/components/admin/AdminServices";
 import AdminSettings from "@/components/admin/AdminSettings";
@@ -190,6 +192,9 @@ const Admin = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [moreFeaturesOpen, setMoreFeaturesOpen] = useState(false);
   const [testFeaturesOpen, setTestFeaturesOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [sidebarOrder, setSidebarOrder] = useState<string[] | null>(null);
+  const [draggedSidebarItem, setDraggedSidebarItem] = useState<string | null>(null);
   const [selectedAppointmentForInvoice, setSelectedAppointmentForInvoice] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({ 
     totalUsers: 0, 
@@ -219,7 +224,7 @@ const Admin = () => {
   }, [signOut, navigate]);
 
   // Idle timeout for auto-logout (configurable from settings)
-  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState<number>(15);
+  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState<number>(60);
   
   useEffect(() => {
     const fetchIdleTimeout = async () => {
@@ -229,7 +234,7 @@ const Admin = () => {
         .eq("key", "idle_timeout_minutes")
         .single();
       if (data?.value) {
-        setIdleTimeoutMinutes(parseInt(data.value) || 15);
+        setIdleTimeoutMinutes(parseInt(data.value) || 60);
       }
     };
     fetchIdleTimeout();
@@ -252,6 +257,66 @@ const Admin = () => {
       setAccessDeniedOpen(true);
     }
   }, [isAdmin, isLoading, user]);
+
+  // Load sidebar order from settings
+  useEffect(() => {
+    if (isSuperAdmin) {
+      const loadSidebarOrder = async () => {
+        const { data } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "sidebar_order")
+          .maybeSingle();
+        if (data?.value) {
+          try {
+            setSidebarOrder(JSON.parse(data.value));
+          } catch { /* ignore parse errors */ }
+        }
+      };
+      loadSidebarOrder();
+    }
+  }, [isSuperAdmin]);
+
+  const saveSidebarOrder = async (order: string[]) => {
+    setSidebarOrder(order);
+    await supabase
+      .from("site_settings")
+      .upsert({ key: "sidebar_order", value: JSON.stringify(order), updated_at: new Date().toISOString() }, { onConflict: "key" });
+    toast({ title: "Layout Saved", description: "Sidebar order has been saved." });
+  };
+
+  const handleSidebarDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedSidebarItem(id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleSidebarDragOver = (e: React.DragEvent, targetId: string, tabsList: { id: string }[]) => {
+    e.preventDefault();
+    if (!draggedSidebarItem || draggedSidebarItem === targetId) return;
+    
+    const currentOrder = tabsList.map(t => t.id);
+    const dragIdx = currentOrder.indexOf(draggedSidebarItem);
+    const targetIdx = currentOrder.indexOf(targetId);
+    if (dragIdx === -1 || targetIdx === -1) return;
+    
+    const newOrder = [...currentOrder];
+    newOrder.splice(dragIdx, 1);
+    newOrder.splice(targetIdx, 0, draggedSidebarItem);
+    setSidebarOrder(newOrder);
+  };
+
+  const handleSidebarDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDraggedSidebarItem(null);
+  };
+
+  const toggleEditMode = () => {
+    if (editMode && sidebarOrder) {
+      // Saving on exit
+      saveSidebarOrder(sidebarOrder);
+    }
+    setEditMode(!editMode);
+  };
 
   useEffect(() => {
     if (isAdmin) {
@@ -644,6 +709,17 @@ const Admin = () => {
     { id: "settings" as AdminTab, label: "Settings", icon: Settings, visible: permissions.can_view_settings },
   ].filter(tab => tab.visible);
 
+  // Apply saved sidebar order
+  const sortedCoreTabs = (() => {
+    if (!sidebarOrder || sidebarOrder.length === 0) return coreTabs;
+    const orderMap = new Map(sidebarOrder.map((id, idx) => [id, idx]));
+    return [...coreTabs].sort((a, b) => {
+      const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
+      const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
+      return aIdx - bIdx;
+    });
+  })();
+
   // More Features - 25 new enterprise modules grouped by subsection
   const moreFeaturesSections = [
     {
@@ -714,7 +790,7 @@ const Admin = () => {
   const allMoreFeatureIds = moreFeaturesSections.flatMap(s => s.items.map(i => i.id));
   const allTestFeatureIds = testFeaturesTabs.map(t => t.id);
 
-  const tabs = coreTabs; // kept for renderContent compatibility
+  const tabs = sortedCoreTabs; // sorted by saved order
 
   const renderContent = () => {
     switch (activeTab) {
@@ -1061,22 +1137,38 @@ const Admin = () => {
         </div>
 
         <nav className="flex-1 px-3 py-3 overflow-y-auto" role="navigation">
+          {/* Edit mode banner */}
+          {editMode && (
+            <div className="mb-3 p-2 rounded-lg bg-primary/10 border border-primary/20 text-center">
+              <p className="text-[11px] font-medium text-primary">✏️ Drag items to reorder</p>
+            </div>
+          )}
           {/* Core tabs */}
-          <div className="space-y-0.5">
+          <div className="space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                draggable={editMode}
+                onDragStart={editMode ? (e) => handleSidebarDragStart(e, tab.id) : undefined}
+                onDragOver={editMode ? (e) => handleSidebarDragOver(e, tab.id, tabs) : undefined}
                 onClick={() => {
-                  setActiveTab(tab.id);
-                  setSidebarOpen(false);
+                  if (!editMode) {
+                    setActiveTab(tab.id);
+                    setSidebarOpen(false);
+                  }
                 }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
-                  activeTab === tab.id
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  editMode
+                    ? draggedSidebarItem === tab.id
+                      ? "opacity-50 bg-muted border border-dashed border-primary"
+                      : "cursor-grab active:cursor-grabbing hover:bg-muted/70 border border-transparent hover:border-primary/30"
+                    : activeTab === tab.id
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
-                aria-current={activeTab === tab.id ? "page" : undefined}
+                aria-current={!editMode && activeTab === tab.id ? "page" : undefined}
               >
+                {editMode && <GripVertical className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
                 <tab.icon className="w-4 h-4 flex-shrink-0" />
                 <span className="truncate">{tab.label}</span>
                 {tab.badge && tab.badge > 0 && (
@@ -1212,13 +1304,13 @@ const Admin = () => {
           <ThemeToggle />
           {isSuperAdmin && (
             <button
-              onClick={() => setActiveTab("test-section-manager")}
+              onClick={toggleEditMode}
               className={`p-2 rounded-lg transition-colors ${
-                activeTab === "test-section-manager" ? "bg-primary/10 text-primary" : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                editMode ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground hover:text-foreground"
               }`}
-              title="Edit Admin Panel"
+              title={editMode ? "Save & Exit Edit Mode" : "Edit Admin Panel Layout"}
             >
-              <Palette className="w-5 h-5" />
+              <Pencil className="w-5 h-5" />
             </button>
           )}
           <Popover>

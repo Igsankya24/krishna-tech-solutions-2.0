@@ -198,7 +198,7 @@ const AdminSettings = () => {
           </p>
           <div className="flex gap-2 items-center">
             <Select
-              value={settings.idle_timeout_minutes || "15"}
+              value={settings.idle_timeout_minutes || "60"}
               onValueChange={(value) => updateSetting("idle_timeout_minutes", value)}
             >
               <SelectTrigger className="w-48">
