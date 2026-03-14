@@ -1229,7 +1229,7 @@ const Admin = () => {
             </div>
           )}
           {/* Core tabs */}
-          <div className="space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
+          <div className="space-y-0.5" onDrop={(e) => handleSectionDrop(e, "core")} onDragOver={(e) => e.preventDefault()}>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
