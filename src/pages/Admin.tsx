@@ -1232,38 +1232,70 @@ const Admin = () => {
             </button>
 
             {moreFeaturesOpen && (
-              <div className="mt-1 space-y-3">
-                {moreFeaturesSections.map((section) => {
-                  const visibleItems = section.items.filter(i => i.visible);
-                  if (visibleItems.length === 0) return null;
-                  return (
-                    <div key={section.label}>
-                      <p className="px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        {section.label}
-                      </p>
-                      <div className="space-y-0.5">
-                        {visibleItems.map((item) => (
-                          <button
-                            key={item.id}
-                            onClick={() => {
-                              setActiveTab(item.id);
-                              setSidebarOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 ${
-                              activeTab === item.id
-                                ? "bg-primary text-primary-foreground shadow-sm"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                            }`}
-                            aria-current={activeTab === item.id ? "page" : undefined}
-                          >
-                            <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                            <span className="truncate">{item.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="mt-1 space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
+                {editMode ? (
+                  // Flat draggable list in edit mode
+                  sortedMoreItems.map((item) => (
+                    <button
+                      key={item.id}
+                      draggable
+                      onDragStart={(e) => handleSidebarDragStart(e, item.id, "more")}
+                      onDragOver={(e) => handleSidebarDragOver(e, item.id, sortedMoreItems, "more")}
+                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 ${
+                        draggedSidebarItem === item.id
+                          ? "opacity-50 bg-muted border border-dashed border-primary"
+                          : "cursor-grab active:cursor-grabbing hover:bg-muted/70 border border-transparent hover:border-primary/30"
+                      }`}
+                    >
+                      <GripVertical className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  ))
+                ) : (
+                  // Grouped view in normal mode
+                  <div className="space-y-3">
+                    {moreFeaturesSections.map((section) => {
+                      const visibleItems = section.items.filter(i => i.visible);
+                      if (visibleItems.length === 0) return null;
+                      // Sort visible items by moreOrder if available
+                      const sortedItems = moreOrder && moreOrder.length > 0
+                        ? [...visibleItems].sort((a, b) => {
+                            const aIdx = moreOrder.indexOf(a.id);
+                            const bIdx = moreOrder.indexOf(b.id);
+                            return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+                          })
+                        : visibleItems;
+                      return (
+                        <div key={section.label}>
+                          <p className="px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            {section.label}
+                          </p>
+                          <div className="space-y-0.5">
+                            {sortedItems.map((item) => (
+                              <button
+                                key={item.id}
+                                onClick={() => {
+                                  setActiveTab(item.id);
+                                  setSidebarOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 ${
+                                  activeTab === item.id
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                }`}
+                                aria-current={activeTab === item.id ? "page" : undefined}
+                              >
+                                <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                                <span className="truncate">{item.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1285,19 +1317,35 @@ const Admin = () => {
               </button>
 
               {testFeaturesOpen && (
-                <div className="mt-1 space-y-0.5">
-                  {testFeaturesTabs.map((item) => (
+                <div className="mt-1 space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
+                  {sortedTestTabs.map((item) => (
                     <button
                       key={item.id}
+                      draggable={editMode}
+                      onDragStart={editMode ? (e) => handleSidebarDragStart(e, item.id, "test") : undefined}
+                      onDragOver={editMode ? (e) => handleSidebarDragOver(e, item.id, sortedTestTabs, "test") : undefined}
                       onClick={() => {
-                        setActiveTab(item.id);
-                        setSidebarOpen(false);
+                        if (!editMode) {
+                          setActiveTab(item.id);
+                          setSidebarOpen(false);
+                        }
                       }}
                       className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 ${
-                        activeTab === item.id
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        editMode
+                          ? draggedSidebarItem === item.id
+                            ? "opacity-50 bg-muted border border-dashed border-primary"
+                            : "cursor-grab active:cursor-grabbing hover:bg-muted/70 border border-transparent hover:border-primary/30"
+                          : activeTab === item.id
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
+                      aria-current={!editMode && activeTab === item.id ? "page" : undefined}
+                    >
+                      {editMode && <GripVertical className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
+                      <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  ))}
                       aria-current={activeTab === item.id ? "page" : undefined}
                     >
                       <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
