@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/services/database";
 import { storage } from "@/services/storage";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,8 @@ import {
   Shield,
   Terminal,
   Info,
+  Clock,
+  Zap,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -44,37 +47,37 @@ interface BackupData {
   data: Record<string, unknown[]>;
 }
 
-interface StorageFile {
-  name: string;
+interface BackupMetadata {
+  id: string;
+  file_name: string;
+  file_size: number;
+  record_count: number;
+  tables_included: string[];
+  status: string;
+  backup_type: string;
+  created_by: string | null;
   created_at: string;
-  metadata: { size: number } | null;
+  error_message: string | null;
 }
 
 // ─── Constants ────────────────────────────────────────────
 const BACKUP_TABLES = [
-  "services",
-  "appointments",
-  "coupons",
-  "contact_messages",
-  "profiles",
-  "user_roles",
-  "user_access",
-  "admin_permissions",
-  "notifications",
-  "site_settings",
-  "technicians",
-  "testimonials",
-  "team_members",
-  "service_projects",
-  "blog_posts",
-  "blog_categories",
-  "blog_tags",
-  "blog_post_tags",
-  "blog_ads",
-  "invoices",
+  "services", "appointments", "coupons", "contact_messages", "profiles",
+  "user_roles", "user_access", "admin_permissions", "notifications",
+  "site_settings", "technicians", "testimonials", "team_members",
+  "service_projects", "blog_posts", "blog_categories", "blog_tags",
+  "blog_post_tags", "blog_ads", "invoices",
 ] as const;
 
 const BUCKET = "backups";
+
+// ─── Helpers ──────────────────────────────────────────────
+const formatBytes = (bytes: number) => {
+  if (!bytes) return "—";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 // ─── Sub-components ───────────────────────────────────────
 
@@ -88,47 +91,64 @@ function BackupTab({
   onCreateBackup: () => void;
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Download className="w-5 h-5 text-primary" />
-          Create Backup
-        </CardTitle>
-        <CardDescription>
-          Export all application data as a JSON file and store it securely. Includes services, appointments, users, settings, blog content, and more.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-muted/50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-foreground mb-2">Tables included in backup:</h4>
-          <div className="flex flex-wrap gap-2">
-            {BACKUP_TABLES.map((table) => (
-              <span key={table} className="text-xs px-2 py-1 rounded-md bg-background border border-border text-muted-foreground">
-                {table.replace(/_/g, " ")}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {isCreating && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Exporting data...</span>
-              <span className="font-medium text-foreground">{progress}%</span>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Download className="w-5 h-5 text-primary" />
+            Create Backup
+          </CardTitle>
+          <CardDescription>
+            Export all application data as a JSON file and store it securely. Includes services, appointments, users, settings, blog content, and more.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-muted/50 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-foreground mb-2">Tables included in backup:</h4>
+            <div className="flex flex-wrap gap-2">
+              {BACKUP_TABLES.map((table) => (
+                <span key={table} className="text-xs px-2 py-1 rounded-md bg-background border border-border text-muted-foreground">
+                  {table.replace(/_/g, " ")}
+                </span>
+              ))}
             </div>
-            <Progress value={progress} className="h-2" />
           </div>
-        )}
 
-        <Button onClick={onCreateBackup} disabled={isCreating} className="w-full sm:w-auto" size="lg">
-          {isCreating ? (
-            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating Backup...</>
-          ) : (
-            <><Download className="w-4 h-4 mr-2" /> Create Backup</>
+          {isCreating && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Exporting data...</span>
+                <span className="font-medium text-foreground">{progress}%</span>
+              </div>
+              <Progress value={progress} className="h-2" />
+            </div>
           )}
-        </Button>
-      </CardContent>
-    </Card>
+
+          <Button onClick={onCreateBackup} disabled={isCreating} className="w-full sm:w-auto" size="lg">
+            {isCreating ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating Backup...</>
+            ) : (
+              <><Download className="w-4 h-4 mr-2" /> Create Backup</>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Scheduled backup info */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="pt-4">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-primary flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Automatic Daily Backups</p>
+              <p className="text-xs text-muted-foreground">
+                Scheduled backups run daily at 2:00 AM UTC. Backup files are stored in secure cloud storage and metadata is logged in the History tab.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -219,25 +239,18 @@ function RestoreTab({
 }
 
 function HistoryTab({
-  files,
+  records,
   loading,
   onRefresh,
   onDownload,
   onDelete,
 }: {
-  files: StorageFile[];
+  records: BackupMetadata[];
   loading: boolean;
   onRefresh: () => void;
   onDownload: (name: string) => void;
-  onDelete: (name: string) => void;
+  onDelete: (id: string, fileName: string) => void;
 }) {
-  const formatBytes = (bytes: number) => {
-    if (!bytes) return "—";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -247,7 +260,7 @@ function HistoryTab({
               <History className="w-5 h-5 text-primary" />
               Backup History
             </CardTitle>
-            <CardDescription>Backups stored securely in cloud storage.</CardDescription>
+            <CardDescription>All backups including manual and scheduled automatic backups.</CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} /> Refresh
@@ -259,7 +272,7 @@ function HistoryTab({
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
-        ) : files.length === 0 ? (
+        ) : records.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <History className="w-12 h-12 mx-auto mb-4 opacity-30" />
             <p>No backups found.</p>
@@ -271,32 +284,63 @@ function HistoryTab({
               <thead className="bg-muted/50">
                 <tr>
                   <th className="p-3 text-left text-sm font-medium">Backup Name</th>
+                  <th className="p-3 text-left text-sm font-medium">Type</th>
                   <th className="p-3 text-left text-sm font-medium">Date Created</th>
+                  <th className="p-3 text-left text-sm font-medium">Records</th>
                   <th className="p-3 text-left text-sm font-medium">Size</th>
+                  <th className="p-3 text-left text-sm font-medium">Status</th>
                   <th className="p-3 text-right text-sm font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {files.map((file) => (
-                  <tr key={file.name} className="border-t border-border hover:bg-muted/30">
+                {records.map((record) => (
+                  <tr key={record.id} className="border-t border-border hover:bg-muted/30">
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <FileJson className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium text-foreground">{file.name}</span>
+                        <span className="text-sm font-medium text-foreground">{record.file_name}</span>
                       </div>
                     </td>
-                    <td className="p-3 text-sm text-muted-foreground">
-                      {file.created_at ? format(new Date(file.created_at), "PPpp") : "—"}
+                    <td className="p-3">
+                      <Badge variant={record.backup_type === "scheduled" ? "secondary" : "default"} className="text-xs">
+                        {record.backup_type === "scheduled" ? (
+                          <><Clock className="w-3 h-3 mr-1" /> Scheduled</>
+                        ) : (
+                          <><Zap className="w-3 h-3 mr-1" /> Manual</>
+                        )}
+                      </Badge>
                     </td>
                     <td className="p-3 text-sm text-muted-foreground">
-                      {formatBytes(file.metadata?.size || 0)}
+                      {format(new Date(record.created_at), "PPpp")}
+                    </td>
+                    <td className="p-3 text-sm text-foreground font-medium">
+                      {record.record_count.toLocaleString()}
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground">
+                      {formatBytes(record.file_size)}
+                    </td>
+                    <td className="p-3">
+                      <Badge variant={record.status === "completed" ? "default" : "destructive"} className="text-xs">
+                        {record.status === "completed" ? (
+                          <><CheckCircle2 className="w-3 h-3 mr-1" /> Completed</>
+                        ) : (
+                          <><AlertTriangle className="w-3 h-3 mr-1" /> Failed</>
+                        )}
+                      </Badge>
                     </td>
                     <td className="p-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => onDownload(file.name)}>
-                          <Download className="w-3.5 h-3.5 mr-1" /> Download
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete(file.name)}>
+                        {record.status === "completed" && (
+                          <Button variant="outline" size="sm" onClick={() => onDownload(record.file_name)}>
+                            <Download className="w-3.5 h-3.5 mr-1" /> Download
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => onDelete(record.id, record.file_name)}
+                        >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
@@ -315,7 +359,6 @@ function HistoryTab({
 function InstructionsTab() {
   return (
     <div className="space-y-6">
-      {/* Section 1 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -334,12 +377,30 @@ function InstructionsTab() {
         </CardContent>
       </Card>
 
-      {/* Section 2 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-primary" />
+            Automatic Daily Backups
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-3">
+            The system runs an automatic backup every day at <strong className="text-foreground">2:00 AM UTC</strong>. These backups are:
+          </p>
+          <ul className="list-disc list-inside space-y-1.5 text-sm text-muted-foreground">
+            <li>Created and uploaded to cloud storage automatically</li>
+            <li>Logged in the <strong className="text-foreground">History</strong> tab with a "Scheduled" badge</li>
+            <li>Available for download at any time</li>
+          </ul>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Download className="w-5 h-5 text-primary" />
-            How to Create a Backup
+            How to Create a Manual Backup
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -349,12 +410,11 @@ function InstructionsTab() {
             <li>Navigate to <strong className="text-foreground">Backup & Restore</strong> in the sidebar</li>
             <li>Click <strong className="text-foreground">Create Backup</strong></li>
             <li>Wait for the progress bar to complete</li>
-            <li>The backup file is automatically saved to cloud storage and downloaded to your device</li>
+            <li>The backup file is saved to cloud storage and downloaded to your device</li>
           </ol>
         </CardContent>
       </Card>
 
-      {/* Section 3 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -378,7 +438,6 @@ function InstructionsTab() {
         </CardContent>
       </Card>
 
-      {/* Section 4 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -388,18 +447,17 @@ function InstructionsTab() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            For a complete PostgreSQL backup including schema, functions, triggers, and all data, use the <code className="text-xs bg-muted px-1 py-0.5 rounded">pg_dump</code> command-line tool:
+            For a complete PostgreSQL backup including schema, functions, triggers, and all data, use <code className="text-xs bg-muted px-1 py-0.5 rounded">pg_dump</code>:
           </p>
           <div className="bg-muted rounded-lg p-4 font-mono text-xs text-foreground overflow-x-auto">
             pg_dump -h db.your-project.supabase.co -U postgres -d postgres &gt; backup.sql
           </div>
           <p className="text-xs text-muted-foreground">
-            This creates a full Postgres dump file that can be restored using <code className="bg-muted px-1 py-0.5 rounded">psql</code> or <code className="bg-muted px-1 py-0.5 rounded">pg_restore</code>. This method captures the complete database schema including indexes, constraints, and custom functions.
+            This creates a full Postgres dump including indexes, constraints, and custom functions. Restore using <code className="bg-muted px-1 py-0.5 rounded">psql</code> or <code className="bg-muted px-1 py-0.5 rounded">pg_restore</code>.
           </p>
         </CardContent>
       </Card>
 
-      {/* Section 5 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -409,7 +467,7 @@ function InstructionsTab() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            If your project is hosted on Supabase, you can also access automatic backups through the Supabase Dashboard:
+            If your project is hosted on Supabase, automatic backups are available through the Dashboard:
           </p>
           <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
             <li>Open the <strong className="text-foreground">Supabase Dashboard</strong></li>
@@ -419,7 +477,7 @@ function InstructionsTab() {
           <div className="flex items-center gap-2 p-3 rounded-lg bg-muted border border-border mt-2">
             <Shield className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             <p className="text-xs text-muted-foreground">
-              Automatic backup frequency depends on your Supabase plan. Free plans include weekly backups; Pro plans include daily backups with point-in-time recovery.
+              Automatic backup frequency depends on your plan. Free plans include weekly backups; Pro plans include daily backups with point-in-time recovery.
             </p>
           </div>
         </CardContent>
@@ -441,29 +499,31 @@ const AdminBackupRestore = () => {
   const [isRestoring, setIsRestoring] = useState(false);
   const [confirmRestoreOpen, setConfirmRestoreOpen] = useState(false);
 
-  const [storageFiles, setStorageFiles] = useState<StorageFile[]>([]);
+  const [backupRecords, setBackupRecords] = useState<BackupMetadata[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // ─── Load backup history from storage ───────────────────
-  const fetchBackupHistory = async () => {
+  // ─── Load backup history from database ──────────────────
+  const fetchBackupHistory = useCallback(async () => {
     setLoadingHistory(true);
     try {
-      const { data, error } = await storage.from(BUCKET).list("", {
-        sortBy: { column: "created_at", order: "desc" },
-      });
+      const { data, error } = await supabase
+        .from("backup_metadata" as any)
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
       if (error) throw error;
-      setStorageFiles((data as unknown as StorageFile[]) || []);
+      setBackupRecords((data as unknown as BackupMetadata[]) || []);
     } catch (err) {
       console.warn("Failed to fetch backup history:", err);
-      setStorageFiles([]);
+      setBackupRecords([]);
     } finally {
       setLoadingHistory(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchBackupHistory();
-  }, []);
+  }, [fetchBackupHistory]);
 
   // ─── Create Backup ─────────────────────────────────────
   const createBackup = async () => {
@@ -507,9 +567,27 @@ const AdminBackupRestore = () => {
         contentType: "application/json",
         upsert: false,
       });
-      if (uploadError) console.warn("Storage upload failed:", uploadError.message);
 
-      // Also download locally
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Save metadata
+      await supabase.from("backup_metadata" as any).insert({
+        file_name: fileName,
+        file_size: jsonStr.length,
+        record_count: totalRecords,
+        tables_included: [...BACKUP_TABLES],
+        status: uploadError ? "failed" : "completed",
+        backup_type: "manual",
+        created_by: user?.id || null,
+        error_message: uploadError?.message || null,
+      } as any);
+
+      if (uploadError) {
+        console.warn("Storage upload failed:", uploadError.message);
+      }
+
+      // Download locally
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -605,9 +683,12 @@ const AdminBackupRestore = () => {
     URL.revokeObjectURL(url);
   };
 
-  // ─── Delete from storage ───────────────────────────────
-  const deleteBackup = async (name: string) => {
-    const { error } = await storage.from(BUCKET).remove([name]);
+  // ─── Delete backup ─────────────────────────────────────
+  const deleteBackup = async (id: string, fileName: string) => {
+    // Delete from storage (ignore error if file already gone)
+    await storage.from(BUCKET).remove([fileName]);
+    // Delete metadata
+    const { error } = await supabase.from("backup_metadata" as any).delete().eq("id", id);
     if (error) {
       toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
       return;
@@ -621,7 +702,7 @@ const AdminBackupRestore = () => {
       <div>
         <h2 className="text-2xl font-bold text-foreground">Backup & Restore</h2>
         <p className="text-muted-foreground text-sm mt-1">
-          Create backups of your application data, restore from previous backups, and view instructions.
+          Create backups, restore data, view history, and read instructions.
         </p>
       </div>
 
@@ -658,7 +739,7 @@ const AdminBackupRestore = () => {
 
         <TabsContent value="history" className="mt-4">
           <HistoryTab
-            files={storageFiles}
+            records={backupRecords}
             loading={loadingHistory}
             onRefresh={fetchBackupHistory}
             onDownload={downloadBackup}

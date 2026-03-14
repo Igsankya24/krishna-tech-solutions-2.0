@@ -176,6 +176,45 @@ export type Database = {
           },
         ]
       }
+      backup_metadata: {
+        Row: {
+          backup_type: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          file_name: string
+          file_size: number
+          id: string
+          record_count: number
+          status: string
+          tables_included: string[]
+        }
+        Insert: {
+          backup_type?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_name: string
+          file_size?: number
+          id?: string
+          record_count?: number
+          status?: string
+          tables_included?: string[]
+        }
+        Update: {
+          backup_type?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_name?: string
+          file_size?: number
+          id?: string
+          record_count?: number
+          status?: string
+          tables_included?: string[]
+        }
+        Relationships: []
+      }
       blog_ad_analytics: {
         Row: {
           ad_id: string
