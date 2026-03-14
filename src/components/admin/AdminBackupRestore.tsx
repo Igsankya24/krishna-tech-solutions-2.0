@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/services/database";
+import { storage } from "@/services/storage";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,18 +14,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Download, Upload, History, FileJson, AlertTriangle, CheckCircle2, Loader2, Trash2, RefreshCw } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import {
+  Download,
+  Upload,
+  History,
+  FileJson,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  Trash2,
+  RefreshCw,
+  BookOpen,
+  Database,
+  Shield,
+  Terminal,
+  Info,
+} from "lucide-react";
 import { format } from "date-fns";
 
-interface BackupRecord {
-  id: string;
-  name: string;
-  created_at: string;
-  record_count: number;
-  size_bytes: number;
-  tables: string[];
-}
-
+// ─── Types ────────────────────────────────────────────────
 interface BackupData {
   meta: {
     version: string;
@@ -35,6 +44,13 @@ interface BackupData {
   data: Record<string, unknown[]>;
 }
 
+interface StorageFile {
+  name: string;
+  created_at: string;
+  metadata: { size: number } | null;
+}
+
+// ─── Constants ────────────────────────────────────────────
 const BACKUP_TABLES = [
   "services",
   "appointments",
@@ -58,36 +74,398 @@ const BACKUP_TABLES = [
   "invoices",
 ] as const;
 
+const BUCKET = "backups";
+
+// ─── Sub-components ───────────────────────────────────────
+
+function BackupTab({
+  isCreating,
+  progress,
+  onCreateBackup,
+}: {
+  isCreating: boolean;
+  progress: number;
+  onCreateBackup: () => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Download className="w-5 h-5 text-primary" />
+          Create Backup
+        </CardTitle>
+        <CardDescription>
+          Export all application data as a JSON file and store it securely. Includes services, appointments, users, settings, blog content, and more.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="bg-muted/50 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-foreground mb-2">Tables included in backup:</h4>
+          <div className="flex flex-wrap gap-2">
+            {BACKUP_TABLES.map((table) => (
+              <span key={table} className="text-xs px-2 py-1 rounded-md bg-background border border-border text-muted-foreground">
+                {table.replace(/_/g, " ")}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {isCreating && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Exporting data...</span>
+              <span className="font-medium text-foreground">{progress}%</span>
+            </div>
+            <Progress value={progress} className="h-2" />
+          </div>
+        )}
+
+        <Button onClick={onCreateBackup} disabled={isCreating} className="w-full sm:w-auto" size="lg">
+          {isCreating ? (
+            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating Backup...</>
+          ) : (
+            <><Download className="w-4 h-4 mr-2" /> Create Backup</>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RestoreTab({
+  restoreFile,
+  restoreFileName,
+  isRestoring,
+  fileInputRef,
+  onFileSelect,
+  onConfirmRestore,
+}: {
+  restoreFile: BackupData | null;
+  restoreFileName: string;
+  isRestoring: boolean;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onConfirmRestore: () => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Upload className="w-5 h-5 text-primary" />
+          Restore from Backup
+        </CardTitle>
+        <CardDescription>
+          Upload a previously exported .json backup file to restore your data. Existing records with matching IDs will be updated.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+          <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+          <p className="text-sm text-destructive">
+            <strong>Warning:</strong> This action will overwrite existing database data. Existing records with matching IDs will be replaced. This cannot be undone.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Select Backup File</label>
+          <Input ref={fileInputRef} type="file" accept=".json" onChange={onFileSelect} className="cursor-pointer" />
+        </div>
+
+        {restoreFile && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="pt-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <FileJson className="w-5 h-5 text-primary" />
+                <span className="font-medium text-foreground">{restoreFileName}</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Created</p>
+                  <p className="font-medium">{format(new Date(restoreFile.meta.created_at), "PP")}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Records</p>
+                  <p className="font-medium">{restoreFile.meta.record_count.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Tables</p>
+                  <p className="font-medium">{restoreFile.meta.tables.length}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Data per table:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(restoreFile.data).map(([table, rows]) => (
+                    <span key={table} className="text-xs px-2 py-0.5 rounded bg-background border border-border">
+                      {table.replace(/_/g, " ")} ({(rows as unknown[]).length})
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <Button onClick={onConfirmRestore} disabled={isRestoring} variant="destructive" className="w-full sm:w-auto">
+                {isRestoring ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Restoring...</>
+                ) : (
+                  <><RefreshCw className="w-4 h-4 mr-2" /> Restore Data</>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function HistoryTab({
+  files,
+  loading,
+  onRefresh,
+  onDownload,
+  onDelete,
+}: {
+  files: StorageFile[];
+  loading: boolean;
+  onRefresh: () => void;
+  onDownload: (name: string) => void;
+  onDelete: (name: string) => void;
+}) {
+  const formatBytes = (bytes: number) => {
+    if (!bytes) return "—";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <History className="w-5 h-5 text-primary" />
+              Backup History
+            </CardTitle>
+            <CardDescription>Backups stored securely in cloud storage.</CardDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : files.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <History className="w-12 h-12 mx-auto mb-4 opacity-30" />
+            <p>No backups found.</p>
+            <p className="text-xs mt-1">Create your first backup to see it here.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="p-3 text-left text-sm font-medium">Backup Name</th>
+                  <th className="p-3 text-left text-sm font-medium">Date Created</th>
+                  <th className="p-3 text-left text-sm font-medium">Size</th>
+                  <th className="p-3 text-right text-sm font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {files.map((file) => (
+                  <tr key={file.name} className="border-t border-border hover:bg-muted/30">
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <FileJson className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium text-foreground">{file.name}</span>
+                      </div>
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground">
+                      {file.created_at ? format(new Date(file.created_at), "PPpp") : "—"}
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground">
+                      {formatBytes(file.metadata?.size || 0)}
+                    </td>
+                    <td className="p-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => onDownload(file.name)}>
+                          <Download className="w-3.5 h-3.5 mr-1" /> Download
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete(file.name)}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function InstructionsTab() {
+  return (
+    <div className="space-y-6">
+      {/* Section 1 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Info className="w-5 h-5 text-primary" />
+            How Backup Works
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="prose prose-sm max-w-none text-foreground">
+          <p className="text-muted-foreground">
+            Backups export application tables from the database and store them in secure cloud storage as JSON files.
+            Each backup captures a snapshot of all core tables including services, appointments, users, settings, blog content, invoices, and more.
+          </p>
+          <p className="text-muted-foreground">
+            The backup file is self-contained — it includes metadata (creation date, table list, record count) alongside the raw data, making it easy to validate and restore.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Section 2 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Download className="w-5 h-5 text-primary" />
+            How to Create a Backup
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+            <li>Login as <strong className="text-foreground">Super Admin</strong></li>
+            <li>Open the <strong className="text-foreground">Admin Panel</strong></li>
+            <li>Navigate to <strong className="text-foreground">Backup & Restore</strong> in the sidebar</li>
+            <li>Click <strong className="text-foreground">Create Backup</strong></li>
+            <li>Wait for the progress bar to complete</li>
+            <li>The backup file is automatically saved to cloud storage and downloaded to your device</li>
+          </ol>
+        </CardContent>
+      </Card>
+
+      {/* Section 3 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="w-5 h-5 text-primary" />
+            How to Restore a Backup
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+            <li>Go to the <strong className="text-foreground">Restore</strong> tab</li>
+            <li>Upload a <code className="text-xs bg-muted px-1 py-0.5 rounded">.json</code> backup file</li>
+            <li>Review the preview showing tables and record counts</li>
+            <li>Click <strong className="text-foreground">Restore Data</strong> and confirm</li>
+          </ol>
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 mt-3">
+            <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0" />
+            <p className="text-xs text-destructive">
+              Restoring will overwrite existing records with matching IDs. Always create a fresh backup before restoring.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 4 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Terminal className="w-5 h-5 text-primary" />
+            Full Database Backup (Manual — pg_dump)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            For a complete PostgreSQL backup including schema, functions, triggers, and all data, use the <code className="text-xs bg-muted px-1 py-0.5 rounded">pg_dump</code> command-line tool:
+          </p>
+          <div className="bg-muted rounded-lg p-4 font-mono text-xs text-foreground overflow-x-auto">
+            pg_dump -h db.your-project.supabase.co -U postgres -d postgres &gt; backup.sql
+          </div>
+          <p className="text-xs text-muted-foreground">
+            This creates a full Postgres dump file that can be restored using <code className="bg-muted px-1 py-0.5 rounded">psql</code> or <code className="bg-muted px-1 py-0.5 rounded">pg_restore</code>. This method captures the complete database schema including indexes, constraints, and custom functions.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Section 5 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="w-5 h-5 text-primary" />
+            Dashboard Backup (Supabase)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            If your project is hosted on Supabase, you can also access automatic backups through the Supabase Dashboard:
+          </p>
+          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+            <li>Open the <strong className="text-foreground">Supabase Dashboard</strong></li>
+            <li>Go to <strong className="text-foreground">Database → Backups</strong></li>
+            <li>Download the latest snapshot</li>
+          </ol>
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted border border-border mt-2">
+            <Shield className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              Automatic backup frequency depends on your Supabase plan. Free plans include weekly backups; Pro plans include daily backups with point-in-time recovery.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────
 const AdminBackupRestore = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Backup state
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
   const [backupProgress, setBackupProgress] = useState(0);
 
-  // Restore state
   const [restoreFile, setRestoreFile] = useState<BackupData | null>(null);
   const [restoreFileName, setRestoreFileName] = useState("");
   const [isRestoring, setIsRestoring] = useState(false);
   const [confirmRestoreOpen, setConfirmRestoreOpen] = useState(false);
 
-  // History state
-  const [backupHistory, setBackupHistory] = useState<BackupRecord[]>(() => {
-    try {
-      const stored = localStorage.getItem("backup_history");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [storageFiles, setStorageFiles] = useState<StorageFile[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
-  const saveHistory = (records: BackupRecord[]) => {
-    setBackupHistory(records);
-    localStorage.setItem("backup_history", JSON.stringify(records));
+  // ─── Load backup history from storage ───────────────────
+  const fetchBackupHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const { data, error } = await storage.from(BUCKET).list("", {
+        sortBy: { column: "created_at", order: "desc" },
+      });
+      if (error) throw error;
+      setStorageFiles((data as unknown as StorageFile[]) || []);
+    } catch (err) {
+      console.warn("Failed to fetch backup history:", err);
+      setStorageFiles([]);
+    } finally {
+      setLoadingHistory(false);
+    }
   };
 
-  // ─── Backup ─────────────────────────────────────────────
+  useEffect(() => {
+    fetchBackupHistory();
+  }, []);
+
+  // ─── Create Backup ─────────────────────────────────────
   const createBackup = async () => {
     setIsCreatingBackup(true);
     setBackupProgress(0);
@@ -100,10 +478,7 @@ const AdminBackupRestore = () => {
         const table = BACKUP_TABLES[i];
         setBackupProgress(Math.round(((i + 1) / BACKUP_TABLES.length) * 100));
 
-        const { data, error } = await supabase
-          .from(table)
-          .select("*");
-
+        const { data, error } = await supabase.from(table).select("*");
         if (error) {
           console.warn(`Skipping table ${table}: ${error.message}`);
           backupData[table] = [];
@@ -123,28 +498,27 @@ const AdminBackupRestore = () => {
         data: backupData,
       };
 
-      // Download file
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const jsonStr = JSON.stringify(backup, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const fileName = `backup-${format(new Date(), "yyyy-MM-dd-HH-mm")}.json`;
+
+      // Upload to storage
+      const { error: uploadError } = await storage.from(BUCKET).upload(fileName, blob, {
+        contentType: "application/json",
+        upsert: false,
+      });
+      if (uploadError) console.warn("Storage upload failed:", uploadError.message);
+
+      // Also download locally
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      const fileName = `backup_${format(new Date(), "yyyy-MM-dd_HH-mm-ss")}.json`;
       a.href = url;
       a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
 
-      // Save to history
-      const record: BackupRecord = {
-        id: crypto.randomUUID(),
-        name: fileName,
-        created_at: new Date().toISOString(),
-        record_count: totalRecords,
-        size_bytes: blob.size,
-        tables: [...BACKUP_TABLES],
-      };
-      saveHistory([record, ...backupHistory].slice(0, 50));
-
       toast({ title: "Backup Created", description: `${totalRecords} records exported across ${BACKUP_TABLES.length} tables.` });
+      fetchBackupHistory();
     } catch (err) {
       toast({ title: "Backup Failed", description: (err as Error).message, variant: "destructive" });
     } finally {
@@ -153,7 +527,7 @@ const AdminBackupRestore = () => {
     }
   };
 
-  // ─── Restore ────────────────────────────────────────────
+  // ─── Handle file selection for restore ─────────────────
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -168,9 +542,7 @@ const AdminBackupRestore = () => {
     reader.onload = (ev) => {
       try {
         const parsed = JSON.parse(ev.target?.result as string) as BackupData;
-        if (!parsed.meta || !parsed.data) {
-          throw new Error("Invalid backup format: missing meta or data");
-        }
+        if (!parsed.meta || !parsed.data) throw new Error("Invalid backup format: missing meta or data");
         setRestoreFile(parsed);
         toast({ title: "File Loaded", description: `Backup from ${format(new Date(parsed.meta.created_at), "PPpp")} with ${parsed.meta.record_count} records.` });
       } catch (err) {
@@ -181,6 +553,7 @@ const AdminBackupRestore = () => {
     reader.readAsText(file);
   };
 
+  // ─── Execute restore ───────────────────────────────────
   const executeRestore = async () => {
     if (!restoreFile) return;
     setIsRestoring(true);
@@ -194,27 +567,16 @@ const AdminBackupRestore = () => {
         const rows = restoreFile.data[table];
         if (!rows || rows.length === 0) continue;
 
-        // Upsert in batches of 100
         for (let i = 0; i < rows.length; i += 100) {
           const batch = rows.slice(i, i + 100);
-          const { error } = await supabase
-            .from(table as any)
-            .upsert(batch as any[], { onConflict: "id" });
-
-          if (error) {
-            errors.push(`${table}: ${error.message}`);
-          } else {
-            restoredCount += batch.length;
-          }
+          const { error } = await supabase.from(table as any).upsert(batch as any[], { onConflict: "id" });
+          if (error) errors.push(`${table}: ${error.message}`);
+          else restoredCount += batch.length;
         }
       }
 
       if (errors.length > 0) {
-        toast({
-          title: "Restore Completed with Warnings",
-          description: `${restoredCount} records restored. ${errors.length} table(s) had errors.`,
-          variant: "destructive",
-        });
+        toast({ title: "Restore Completed with Warnings", description: `${restoredCount} records restored. ${errors.length} table(s) had errors.`, variant: "destructive" });
       } else {
         toast({ title: "Restore Complete", description: `${restoredCount} records successfully restored.` });
       }
@@ -228,15 +590,30 @@ const AdminBackupRestore = () => {
     }
   };
 
-  const clearHistory = () => {
-    saveHistory([]);
-    toast({ title: "History Cleared" });
+  // ─── Download from storage ─────────────────────────────
+  const downloadBackup = async (name: string) => {
+    const { data, error } = await storage.from(BUCKET).download(name);
+    if (error || !data) {
+      toast({ title: "Download Failed", description: error?.message || "File not found", variant: "destructive" });
+      return;
+    }
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  // ─── Delete from storage ───────────────────────────────
+  const deleteBackup = async (name: string) => {
+    const { error } = await storage.from(BUCKET).remove([name]);
+    if (error) {
+      toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Backup Deleted" });
+    fetchBackupHistory();
   };
 
   return (
@@ -244,12 +621,12 @@ const AdminBackupRestore = () => {
       <div>
         <h2 className="text-2xl font-bold text-foreground">Backup & Restore</h2>
         <p className="text-muted-foreground text-sm mt-1">
-          Create backups of your application data and restore from previous backups.
+          Create backups of your application data, restore from previous backups, and view instructions.
         </p>
       </div>
 
       <Tabs defaultValue="backup" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="backup" className="flex items-center gap-2">
             <Download className="w-4 h-4" /> Backup
           </TabsTrigger>
@@ -259,213 +636,38 @@ const AdminBackupRestore = () => {
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="w-4 h-4" /> History
           </TabsTrigger>
+          <TabsTrigger value="instructions" className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4" /> Instructions
+          </TabsTrigger>
         </TabsList>
 
-        {/* ─── Backup Tab ────────────────────────────── */}
-        <TabsContent value="backup" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Download className="w-5 h-5 text-primary" />
-                Create Backup
-              </CardTitle>
-              <CardDescription>
-                Export all application data as a JSON file. This includes services, appointments, users, settings, blog content, and more.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-muted/50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-foreground mb-2">Tables included in backup:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {BACKUP_TABLES.map((table) => (
-                    <span key={table} className="text-xs px-2 py-1 rounded-md bg-background border border-border text-muted-foreground">
-                      {table.replace(/_/g, " ")}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {isCreatingBackup && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Exporting data...</span>
-                    <span className="font-medium text-foreground">{backupProgress}%</span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className="bg-primary h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${backupProgress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <Button
-                onClick={createBackup}
-                disabled={isCreatingBackup}
-                className="w-full sm:w-auto"
-                size="lg"
-              >
-                {isCreatingBackup ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating Backup...</>
-                ) : (
-                  <><Download className="w-4 h-4 mr-2" /> Create Backup</>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+        <TabsContent value="backup" className="mt-4">
+          <BackupTab isCreating={isCreatingBackup} progress={backupProgress} onCreateBackup={createBackup} />
         </TabsContent>
 
-        {/* ─── Restore Tab ───────────────────────────── */}
-        <TabsContent value="restore" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="w-5 h-5 text-primary" />
-                Restore from Backup
-              </CardTitle>
-              <CardDescription>
-                Upload a previously exported .json backup file to restore your data. Existing records with matching IDs will be updated.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
-                <p className="text-sm text-destructive">
-                  <strong>Warning:</strong> Restoring will upsert data. Existing records with matching IDs will be overwritten. This action cannot be undone.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Select Backup File</label>
-                <Input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json"
-                  onChange={handleFileSelect}
-                  className="cursor-pointer"
-                />
-              </div>
-
-              {restoreFile && (
-                <Card className="border-primary/30 bg-primary/5">
-                  <CardContent className="pt-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <FileJson className="w-5 h-5 text-primary" />
-                      <span className="font-medium text-foreground">{restoreFileName}</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Created</p>
-                        <p className="font-medium">{format(new Date(restoreFile.meta.created_at), "PP")}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Records</p>
-                        <p className="font-medium">{restoreFile.meta.record_count.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Tables</p>
-                        <p className="font-medium">{restoreFile.meta.tables.length}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Data per table:</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {Object.entries(restoreFile.data).map(([table, rows]) => (
-                          <span
-                            key={table}
-                            className="text-xs px-2 py-0.5 rounded bg-background border border-border"
-                          >
-                            {table.replace(/_/g, " ")} ({(rows as unknown[]).length})
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={() => setConfirmRestoreOpen(true)}
-                      disabled={isRestoring}
-                      variant="destructive"
-                      className="w-full sm:w-auto"
-                    >
-                      {isRestoring ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Restoring...</>
-                      ) : (
-                        <><RefreshCw className="w-4 h-4 mr-2" /> Restore Data</>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="restore" className="mt-4">
+          <RestoreTab
+            restoreFile={restoreFile}
+            restoreFileName={restoreFileName}
+            isRestoring={isRestoring}
+            fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
+            onFileSelect={handleFileSelect}
+            onConfirmRestore={() => setConfirmRestoreOpen(true)}
+          />
         </TabsContent>
 
-        {/* ─── History Tab ────────────────────────────── */}
-        <TabsContent value="history" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <History className="w-5 h-5 text-primary" />
-                    Backup History
-                  </CardTitle>
-                  <CardDescription>
-                    Previously created backups from this browser session.
-                  </CardDescription>
-                </div>
-                {backupHistory.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={clearHistory}>
-                    <Trash2 className="w-4 h-4 mr-1" /> Clear
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {backupHistory.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <History className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                  <p>No backup history found.</p>
-                  <p className="text-xs mt-1">Create your first backup to see it here.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-muted/50">
-                      <tr>
-                        <th className="p-3 text-left text-sm font-medium">Backup Name</th>
-                        <th className="p-3 text-left text-sm font-medium">Created Date</th>
-                        <th className="p-3 text-left text-sm font-medium">Records</th>
-                        <th className="p-3 text-left text-sm font-medium">Size</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {backupHistory.map((record) => (
-                        <tr key={record.id} className="border-t border-border hover:bg-muted/30">
-                          <td className="p-3">
-                            <div className="flex items-center gap-2">
-                              <FileJson className="w-4 h-4 text-primary" />
-                              <span className="text-sm font-medium text-foreground">{record.name}</span>
-                            </div>
-                          </td>
-                          <td className="p-3 text-sm text-muted-foreground">
-                            {format(new Date(record.created_at), "PPpp")}
-                          </td>
-                          <td className="p-3 text-sm text-foreground font-medium">
-                            {record.record_count.toLocaleString()}
-                          </td>
-                          <td className="p-3 text-sm text-muted-foreground">
-                            {formatBytes(record.size_bytes)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="history" className="mt-4">
+          <HistoryTab
+            files={storageFiles}
+            loading={loadingHistory}
+            onRefresh={fetchBackupHistory}
+            onDownload={downloadBackup}
+            onDelete={deleteBackup}
+          />
+        </TabsContent>
+
+        <TabsContent value="instructions" className="mt-4">
+          <InstructionsTab />
         </TabsContent>
       </Tabs>
 
@@ -478,7 +680,8 @@ const AdminBackupRestore = () => {
               Confirm Restore
             </DialogTitle>
             <DialogDescription>
-              This will upsert {restoreFile?.meta.record_count.toLocaleString()} records across {restoreFile?.meta.tables.length} tables. Existing records with matching IDs will be overwritten. This action cannot be undone.
+              This will upsert {restoreFile?.meta.record_count.toLocaleString()} records across{" "}
+              {restoreFile?.meta.tables.length} tables. Existing records with matching IDs will be overwritten. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
