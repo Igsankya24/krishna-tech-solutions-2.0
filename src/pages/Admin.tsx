@@ -1126,7 +1126,7 @@ const Admin = () => {
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-40 w-[15.5rem] bg-card border-r border-border transform transition-transform duration-300 ease-out flex flex-col ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
         <div className="px-5 py-4 border-b border-border flex-shrink-0">
