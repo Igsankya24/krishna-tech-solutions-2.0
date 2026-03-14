@@ -194,7 +194,10 @@ const Admin = () => {
   const [testFeaturesOpen, setTestFeaturesOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [sidebarOrder, setSidebarOrder] = useState<string[] | null>(null);
+  const [moreOrder, setMoreOrder] = useState<string[] | null>(null);
+  const [testOrder, setTestOrder] = useState<string[] | null>(null);
   const [draggedSidebarItem, setDraggedSidebarItem] = useState<string | null>(null);
+  const [dragSection, setDragSection] = useState<"core" | "more" | "test" | null>(null);
   const [selectedAppointmentForInvoice, setSelectedAppointmentForInvoice] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({ 
     totalUsers: 0, 
@@ -258,41 +261,50 @@ const Admin = () => {
     }
   }, [isAdmin, isLoading, user]);
 
-  // Load sidebar order from settings
+  // Load sidebar orders from settings
   useEffect(() => {
     if (isSuperAdmin) {
-      const loadSidebarOrder = async () => {
+      const loadOrders = async () => {
         const { data } = await supabase
           .from("site_settings")
-          .select("value")
-          .eq("key", "sidebar_order")
-          .maybeSingle();
-        if (data?.value) {
-          try {
-            setSidebarOrder(JSON.parse(data.value));
-          } catch { /* ignore parse errors */ }
+          .select("key, value")
+          .in("key", ["sidebar_order", "sidebar_more_order", "sidebar_test_order"]);
+        if (data) {
+          data.forEach(row => {
+            try {
+              const parsed = JSON.parse(row.value);
+              if (row.key === "sidebar_order") setSidebarOrder(parsed);
+              if (row.key === "sidebar_more_order") setMoreOrder(parsed);
+              if (row.key === "sidebar_test_order") setTestOrder(parsed);
+            } catch { /* ignore */ }
+          });
         }
       };
-      loadSidebarOrder();
+      loadOrders();
     }
   }, [isSuperAdmin]);
 
-  const saveSidebarOrder = async (order: string[]) => {
-    setSidebarOrder(order);
-    await supabase
-      .from("site_settings")
-      .upsert({ key: "sidebar_order", value: JSON.stringify(order), updated_at: new Date().toISOString() }, { onConflict: "key" });
+  const saveAllOrders = async () => {
+    const updates = [
+      { key: "sidebar_order", value: JSON.stringify(sidebarOrder || []), updated_at: new Date().toISOString() },
+      { key: "sidebar_more_order", value: JSON.stringify(moreOrder || []), updated_at: new Date().toISOString() },
+      { key: "sidebar_test_order", value: JSON.stringify(testOrder || []), updated_at: new Date().toISOString() },
+    ];
+    for (const u of updates) {
+      await supabase.from("site_settings").upsert(u, { onConflict: "key" });
+    }
     toast({ title: "Layout Saved", description: "Sidebar order has been saved." });
   };
 
-  const handleSidebarDragStart = (e: React.DragEvent, id: string) => {
+  const handleSidebarDragStart = (e: React.DragEvent, id: string, section: "core" | "more" | "test") => {
     setDraggedSidebarItem(id);
+    setDragSection(section);
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleSidebarDragOver = (e: React.DragEvent, targetId: string, tabsList: { id: string }[]) => {
+  const handleSidebarDragOver = (e: React.DragEvent, targetId: string, tabsList: { id: string }[], section: "core" | "more" | "test") => {
     e.preventDefault();
-    if (!draggedSidebarItem || draggedSidebarItem === targetId) return;
+    if (!draggedSidebarItem || draggedSidebarItem === targetId || dragSection !== section) return;
     
     const currentOrder = tabsList.map(t => t.id);
     const dragIdx = currentOrder.indexOf(draggedSidebarItem);
@@ -302,18 +314,25 @@ const Admin = () => {
     const newOrder = [...currentOrder];
     newOrder.splice(dragIdx, 1);
     newOrder.splice(targetIdx, 0, draggedSidebarItem);
-    setSidebarOrder(newOrder);
+    
+    if (section === "core") setSidebarOrder(newOrder);
+    else if (section === "more") setMoreOrder(newOrder);
+    else if (section === "test") setTestOrder(newOrder);
   };
 
   const handleSidebarDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDraggedSidebarItem(null);
+    setDragSection(null);
   };
 
   const toggleEditMode = () => {
-    if (editMode && sidebarOrder) {
-      // Saving on exit
-      saveSidebarOrder(sidebarOrder);
+    if (editMode) {
+      saveAllOrders();
+    } else {
+      // Auto-expand sections when entering edit mode
+      setMoreFeaturesOpen(true);
+      setTestFeaturesOpen(true);
     }
     setEditMode(!editMode);
   };
@@ -787,6 +806,28 @@ const Admin = () => {
     { id: "test-section-manager" as AdminTab, label: "Section Manager", icon: Move, visible: isSuperAdmin },
   ].filter(t => t.visible);
 
+  // Flatten all more features for drag reordering
+  const allMoreItems = moreFeaturesSections.flatMap(s => s.items).filter(i => i.visible);
+  const sortedMoreItems = (() => {
+    if (!moreOrder || moreOrder.length === 0) return allMoreItems;
+    const orderMap = new Map(moreOrder.map((id, idx) => [id, idx]));
+    return [...allMoreItems].sort((a, b) => {
+      const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
+      const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
+      return aIdx - bIdx;
+    });
+  })();
+
+  const sortedTestTabs = (() => {
+    if (!testOrder || testOrder.length === 0) return testFeaturesTabs;
+    const orderMap = new Map(testOrder.map((id, idx) => [id, idx]));
+    return [...testFeaturesTabs].sort((a, b) => {
+      const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
+      const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
+      return aIdx - bIdx;
+    });
+  })();
+
   const allMoreFeatureIds = moreFeaturesSections.flatMap(s => s.items.map(i => i.id));
   const allTestFeatureIds = testFeaturesTabs.map(t => t.id);
 
@@ -1149,8 +1190,8 @@ const Admin = () => {
               <button
                 key={tab.id}
                 draggable={editMode}
-                onDragStart={editMode ? (e) => handleSidebarDragStart(e, tab.id) : undefined}
-                onDragOver={editMode ? (e) => handleSidebarDragOver(e, tab.id, tabs) : undefined}
+                onDragStart={editMode ? (e) => handleSidebarDragStart(e, tab.id, "core") : undefined}
+                onDragOver={editMode ? (e) => handleSidebarDragOver(e, tab.id, tabs, "core") : undefined}
                 onClick={() => {
                   if (!editMode) {
                     setActiveTab(tab.id);
@@ -1195,38 +1236,70 @@ const Admin = () => {
             </button>
 
             {moreFeaturesOpen && (
-              <div className="mt-1 space-y-3">
-                {moreFeaturesSections.map((section) => {
-                  const visibleItems = section.items.filter(i => i.visible);
-                  if (visibleItems.length === 0) return null;
-                  return (
-                    <div key={section.label}>
-                      <p className="px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        {section.label}
-                      </p>
-                      <div className="space-y-0.5">
-                        {visibleItems.map((item) => (
-                          <button
-                            key={item.id}
-                            onClick={() => {
-                              setActiveTab(item.id);
-                              setSidebarOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 ${
-                              activeTab === item.id
-                                ? "bg-primary text-primary-foreground shadow-sm"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                            }`}
-                            aria-current={activeTab === item.id ? "page" : undefined}
-                          >
-                            <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                            <span className="truncate">{item.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="mt-1 space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
+                {editMode ? (
+                  // Flat draggable list in edit mode
+                  sortedMoreItems.map((item) => (
+                    <button
+                      key={item.id}
+                      draggable
+                      onDragStart={(e) => handleSidebarDragStart(e, item.id, "more")}
+                      onDragOver={(e) => handleSidebarDragOver(e, item.id, sortedMoreItems, "more")}
+                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 ${
+                        draggedSidebarItem === item.id
+                          ? "opacity-50 bg-muted border border-dashed border-primary"
+                          : "cursor-grab active:cursor-grabbing hover:bg-muted/70 border border-transparent hover:border-primary/30"
+                      }`}
+                    >
+                      <GripVertical className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  ))
+                ) : (
+                  // Grouped view in normal mode
+                  <div className="space-y-3">
+                    {moreFeaturesSections.map((section) => {
+                      const visibleItems = section.items.filter(i => i.visible);
+                      if (visibleItems.length === 0) return null;
+                      // Sort visible items by moreOrder if available
+                      const sortedItems = moreOrder && moreOrder.length > 0
+                        ? [...visibleItems].sort((a, b) => {
+                            const aIdx = moreOrder.indexOf(a.id);
+                            const bIdx = moreOrder.indexOf(b.id);
+                            return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+                          })
+                        : visibleItems;
+                      return (
+                        <div key={section.label}>
+                          <p className="px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            {section.label}
+                          </p>
+                          <div className="space-y-0.5">
+                            {sortedItems.map((item) => (
+                              <button
+                                key={item.id}
+                                onClick={() => {
+                                  setActiveTab(item.id);
+                                  setSidebarOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 ${
+                                  activeTab === item.id
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                }`}
+                                aria-current={activeTab === item.id ? "page" : undefined}
+                              >
+                                <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                                <span className="truncate">{item.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1248,21 +1321,31 @@ const Admin = () => {
               </button>
 
               {testFeaturesOpen && (
-                <div className="mt-1 space-y-0.5">
-                  {testFeaturesTabs.map((item) => (
+                <div className="mt-1 space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
+                  {sortedTestTabs.map((item) => (
                     <button
                       key={item.id}
+                      draggable={editMode}
+                      onDragStart={editMode ? (e) => handleSidebarDragStart(e, item.id, "test") : undefined}
+                      onDragOver={editMode ? (e) => handleSidebarDragOver(e, item.id, sortedTestTabs, "test") : undefined}
                       onClick={() => {
-                        setActiveTab(item.id);
-                        setSidebarOpen(false);
+                        if (!editMode) {
+                          setActiveTab(item.id);
+                          setSidebarOpen(false);
+                        }
                       }}
                       className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 ${
-                        activeTab === item.id
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        editMode
+                          ? draggedSidebarItem === item.id
+                            ? "opacity-50 bg-muted border border-dashed border-primary"
+                            : "cursor-grab active:cursor-grabbing hover:bg-muted/70 border border-transparent hover:border-primary/30"
+                          : activeTab === item.id
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
-                      aria-current={activeTab === item.id ? "page" : undefined}
+                      aria-current={!editMode && activeTab === item.id ? "page" : undefined}
                     >
+                      {editMode && <GripVertical className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
                       <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
                       <span className="truncate">{item.label}</span>
                     </button>
