@@ -261,41 +261,50 @@ const Admin = () => {
     }
   }, [isAdmin, isLoading, user]);
 
-  // Load sidebar order from settings
+  // Load sidebar orders from settings
   useEffect(() => {
     if (isSuperAdmin) {
-      const loadSidebarOrder = async () => {
+      const loadOrders = async () => {
         const { data } = await supabase
           .from("site_settings")
-          .select("value")
-          .eq("key", "sidebar_order")
-          .maybeSingle();
-        if (data?.value) {
-          try {
-            setSidebarOrder(JSON.parse(data.value));
-          } catch { /* ignore parse errors */ }
+          .select("key, value")
+          .in("key", ["sidebar_order", "sidebar_more_order", "sidebar_test_order"]);
+        if (data) {
+          data.forEach(row => {
+            try {
+              const parsed = JSON.parse(row.value);
+              if (row.key === "sidebar_order") setSidebarOrder(parsed);
+              if (row.key === "sidebar_more_order") setMoreOrder(parsed);
+              if (row.key === "sidebar_test_order") setTestOrder(parsed);
+            } catch { /* ignore */ }
+          });
         }
       };
-      loadSidebarOrder();
+      loadOrders();
     }
   }, [isSuperAdmin]);
 
-  const saveSidebarOrder = async (order: string[]) => {
-    setSidebarOrder(order);
-    await supabase
-      .from("site_settings")
-      .upsert({ key: "sidebar_order", value: JSON.stringify(order), updated_at: new Date().toISOString() }, { onConflict: "key" });
+  const saveAllOrders = async () => {
+    const updates = [
+      { key: "sidebar_order", value: JSON.stringify(sidebarOrder || []), updated_at: new Date().toISOString() },
+      { key: "sidebar_more_order", value: JSON.stringify(moreOrder || []), updated_at: new Date().toISOString() },
+      { key: "sidebar_test_order", value: JSON.stringify(testOrder || []), updated_at: new Date().toISOString() },
+    ];
+    for (const u of updates) {
+      await supabase.from("site_settings").upsert(u, { onConflict: "key" });
+    }
     toast({ title: "Layout Saved", description: "Sidebar order has been saved." });
   };
 
-  const handleSidebarDragStart = (e: React.DragEvent, id: string) => {
+  const handleSidebarDragStart = (e: React.DragEvent, id: string, section: "core" | "more" | "test") => {
     setDraggedSidebarItem(id);
+    setDragSection(section);
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleSidebarDragOver = (e: React.DragEvent, targetId: string, tabsList: { id: string }[]) => {
+  const handleSidebarDragOver = (e: React.DragEvent, targetId: string, tabsList: { id: string }[], section: "core" | "more" | "test") => {
     e.preventDefault();
-    if (!draggedSidebarItem || draggedSidebarItem === targetId) return;
+    if (!draggedSidebarItem || draggedSidebarItem === targetId || dragSection !== section) return;
     
     const currentOrder = tabsList.map(t => t.id);
     const dragIdx = currentOrder.indexOf(draggedSidebarItem);
@@ -305,18 +314,21 @@ const Admin = () => {
     const newOrder = [...currentOrder];
     newOrder.splice(dragIdx, 1);
     newOrder.splice(targetIdx, 0, draggedSidebarItem);
-    setSidebarOrder(newOrder);
+    
+    if (section === "core") setSidebarOrder(newOrder);
+    else if (section === "more") setMoreOrder(newOrder);
+    else if (section === "test") setTestOrder(newOrder);
   };
 
   const handleSidebarDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDraggedSidebarItem(null);
+    setDragSection(null);
   };
 
   const toggleEditMode = () => {
-    if (editMode && sidebarOrder) {
-      // Saving on exit
-      saveSidebarOrder(sidebarOrder);
+    if (editMode) {
+      saveAllOrders();
     }
     setEditMode(!editMode);
   };
