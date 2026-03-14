@@ -758,18 +758,7 @@ const Admin = () => {
     { id: "settings" as AdminTab, label: "Settings", icon: Settings, visible: permissions.can_view_settings },
   ].filter(tab => tab.visible);
 
-  // Apply saved sidebar order
-  const sortedCoreTabs = (() => {
-    if (!sidebarOrder || sidebarOrder.length === 0) return coreTabs;
-    const orderMap = new Map(sidebarOrder.map((id, idx) => [id, idx]));
-    return [...coreTabs].sort((a, b) => {
-      const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
-      const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
-      return aIdx - bIdx;
-    });
-  })();
-
-  // More Features - 25 new enterprise modules grouped by subsection
+  // More Features
   const moreFeaturesSections = [
     {
       label: "Search & Actions",
@@ -836,12 +825,40 @@ const Admin = () => {
     { id: "test-section-manager" as AdminTab, label: "Section Manager", icon: Move, visible: isSuperAdmin },
   ].filter(t => t.visible);
 
-  // Flatten all more features for drag reordering
-  const allMoreItems = moreFeaturesSections.flatMap(s => s.items).filter(i => i.visible);
+  // Build master list with default sections
+  const allMoreItemsRaw = moreFeaturesSections.flatMap(s => s.items).filter(i => i.visible);
+  
+  type SidebarItem = { id: AdminTab; label: string; icon: any; visible: boolean; badge?: number; defaultSection: "core" | "more" | "test" };
+  const allItems: SidebarItem[] = [
+    ...coreTabs.map(t => ({ ...t, defaultSection: "core" as const })),
+    ...allMoreItemsRaw.map(t => ({ ...t, defaultSection: "more" as const, badge: undefined as number | undefined })),
+    ...testFeaturesTabs.map(t => ({ ...t, defaultSection: "test" as const, badge: undefined as number | undefined })),
+  ];
+
+  const getEffectiveSection = (id: string, defaultSection: "core" | "more" | "test") => {
+    return sectionAssignments[id] || defaultSection;
+  };
+
+  // Split items by effective section
+  const effectiveCoreTabs = allItems.filter(item => getEffectiveSection(item.id, item.defaultSection) === "core");
+  const effectiveMoreItems = allItems.filter(item => getEffectiveSection(item.id, item.defaultSection) === "more");
+  const effectiveTestItems = allItems.filter(item => getEffectiveSection(item.id, item.defaultSection) === "test");
+
+  // Apply saved order
+  const sortedCoreTabs = (() => {
+    if (!sidebarOrder || sidebarOrder.length === 0) return effectiveCoreTabs;
+    const orderMap = new Map(sidebarOrder.map((id, idx) => [id, idx]));
+    return [...effectiveCoreTabs].sort((a, b) => {
+      const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
+      const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
+      return aIdx - bIdx;
+    });
+  })();
+
   const sortedMoreItems = (() => {
-    if (!moreOrder || moreOrder.length === 0) return allMoreItems;
+    if (!moreOrder || moreOrder.length === 0) return effectiveMoreItems;
     const orderMap = new Map(moreOrder.map((id, idx) => [id, idx]));
-    return [...allMoreItems].sort((a, b) => {
+    return [...effectiveMoreItems].sort((a, b) => {
       const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
       const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
       return aIdx - bIdx;
@@ -849,19 +866,16 @@ const Admin = () => {
   })();
 
   const sortedTestTabs = (() => {
-    if (!testOrder || testOrder.length === 0) return testFeaturesTabs;
+    if (!testOrder || testOrder.length === 0) return effectiveTestItems;
     const orderMap = new Map(testOrder.map((id, idx) => [id, idx]));
-    return [...testFeaturesTabs].sort((a, b) => {
+    return [...effectiveTestItems].sort((a, b) => {
       const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
       const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
       return aIdx - bIdx;
     });
   })();
 
-  const allMoreFeatureIds = moreFeaturesSections.flatMap(s => s.items.map(i => i.id));
-  const allTestFeatureIds = testFeaturesTabs.map(t => t.id);
-
-  const tabs = sortedCoreTabs; // sorted by saved order
+  const tabs = sortedCoreTabs;
 
   const renderContent = () => {
     switch (activeTab) {
