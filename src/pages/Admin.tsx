@@ -1229,6 +1229,12 @@ const Admin = () => {
             </div>
           )}
           {/* Core tabs */}
+          {editMode && draggedSidebarItem && dragSourceSection !== "core" && (
+            <div className="mb-1 py-2 text-center text-[10px] font-medium text-primary border-2 border-dashed border-primary/30 rounded-lg bg-primary/5"
+              onDrop={(e) => handleSectionDrop(e, "core")} onDragOver={(e) => e.preventDefault()}>
+              ↓ Drop here for Main Section
+            </div>
+          )}
           <div className="space-y-0.5" onDrop={(e) => handleSectionDrop(e, "core")} onDragOver={(e) => e.preventDefault()}>
             {tabs.map((tab) => (
               <button
