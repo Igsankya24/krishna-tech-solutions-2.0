@@ -1280,7 +1280,7 @@ const Admin = () => {
             </button>
 
             {moreFeaturesOpen && (
-              <div className="mt-1 space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
+              <div className="mt-1 space-y-0.5" onDrop={(e) => handleSectionDrop(e, "more")} onDragOver={(e) => e.preventDefault()}>
                 {editMode ? (
                   // Flat draggable list in edit mode
                   sortedMoreItems.map((item) => (
