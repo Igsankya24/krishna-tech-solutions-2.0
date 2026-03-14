@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.scheduled-backup]
 verify_jwt = false
+
+[functions.admin-ai-chat]
+verify_jwt = false
