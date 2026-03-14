@@ -1116,7 +1116,7 @@ const Admin = () => {
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="lg:hidden fixed top-3.5 left-3.5 z-50 p-2.5 bg-card rounded-xl border border-border shadow-sm"
+          className="md:hidden fixed top-3.5 left-3.5 z-50 p-2.5 bg-card rounded-xl border border-border shadow-sm"
           aria-label="Toggle sidebar"
         >
           <Menu className="w-5 h-5" />
