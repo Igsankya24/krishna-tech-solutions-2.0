@@ -81,7 +81,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type AdminTab = "dashboard" | "analytics" | "traffic" | "appointments" | "users" | "services" | "service-projects" | "coupons" | "messages" | "bot" | "settings" | "profile" | "permissions" | "deletion-requests" | "customization" | "user-permissions" | "user-access" | "invoices" | "technicians" | "api-keys" | "team-members" | "blog" | "blog-ads" | "testimonials" | "payment-gateway";
+type AdminTab = "dashboard" | "analytics" | "traffic" | "appointments" | "users" | "services" | "service-projects" | "coupons" | "messages" | "bot" | "settings" | "profile" | "permissions" | "deletion-requests" | "customization" | "user-permissions" | "user-access" | "invoices" | "technicians" | "api-keys" | "team-members" | "blog" | "blog-ads" | "testimonials" | "payment-gateway" | "backup-restore";
 
 interface DashboardStats {
   totalUsers: number;
