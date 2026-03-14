@@ -197,7 +197,8 @@ const Admin = () => {
   const [moreOrder, setMoreOrder] = useState<string[] | null>(null);
   const [testOrder, setTestOrder] = useState<string[] | null>(null);
   const [draggedSidebarItem, setDraggedSidebarItem] = useState<string | null>(null);
-  const [dragSection, setDragSection] = useState<"core" | "more" | "test" | null>(null);
+  const [dragSourceSection, setDragSourceSection] = useState<"core" | "more" | "test" | null>(null);
+  const [sectionAssignments, setSectionAssignments] = useState<Record<string, "core" | "more" | "test">>({});
   const [selectedAppointmentForInvoice, setSelectedAppointmentForInvoice] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({ 
     totalUsers: 0, 
@@ -261,14 +262,14 @@ const Admin = () => {
     }
   }, [isAdmin, isLoading, user]);
 
-  // Load sidebar orders from settings
+  // Load sidebar orders and section assignments from settings
   useEffect(() => {
     if (isSuperAdmin) {
       const loadOrders = async () => {
         const { data } = await supabase
           .from("site_settings")
           .select("key, value")
-          .in("key", ["sidebar_order", "sidebar_more_order", "sidebar_test_order"]);
+          .in("key", ["sidebar_order", "sidebar_more_order", "sidebar_test_order", "sidebar_section_assignments"]);
         if (data) {
           data.forEach(row => {
             try {
@@ -276,6 +277,7 @@ const Admin = () => {
               if (row.key === "sidebar_order") setSidebarOrder(parsed);
               if (row.key === "sidebar_more_order") setMoreOrder(parsed);
               if (row.key === "sidebar_test_order") setTestOrder(parsed);
+              if (row.key === "sidebar_section_assignments") setSectionAssignments(parsed);
             } catch { /* ignore */ }
           });
         }
@@ -289,6 +291,7 @@ const Admin = () => {
       { key: "sidebar_order", value: JSON.stringify(sidebarOrder || []), updated_at: new Date().toISOString() },
       { key: "sidebar_more_order", value: JSON.stringify(moreOrder || []), updated_at: new Date().toISOString() },
       { key: "sidebar_test_order", value: JSON.stringify(testOrder || []), updated_at: new Date().toISOString() },
+      { key: "sidebar_section_assignments", value: JSON.stringify(sectionAssignments), updated_at: new Date().toISOString() },
     ];
     for (const u of updates) {
       await supabase.from("site_settings").upsert(u, { onConflict: "key" });
@@ -298,32 +301,62 @@ const Admin = () => {
 
   const handleSidebarDragStart = (e: React.DragEvent, id: string, section: "core" | "more" | "test") => {
     setDraggedSidebarItem(id);
-    setDragSection(section);
+    setDragSourceSection(section);
     e.dataTransfer.effectAllowed = "move";
+    // Auto-expand sections so user can drop into them
+    setMoreFeaturesOpen(true);
+    setTestFeaturesOpen(true);
   };
 
   const handleSidebarDragOver = (e: React.DragEvent, targetId: string, tabsList: { id: string }[], section: "core" | "more" | "test") => {
     e.preventDefault();
-    if (!draggedSidebarItem || draggedSidebarItem === targetId || dragSection !== section) return;
+    if (!draggedSidebarItem || draggedSidebarItem === targetId) return;
     
-    const currentOrder = tabsList.map(t => t.id);
-    const dragIdx = currentOrder.indexOf(draggedSidebarItem);
-    const targetIdx = currentOrder.indexOf(targetId);
-    if (dragIdx === -1 || targetIdx === -1) return;
-    
-    const newOrder = [...currentOrder];
-    newOrder.splice(dragIdx, 1);
-    newOrder.splice(targetIdx, 0, draggedSidebarItem);
-    
-    if (section === "core") setSidebarOrder(newOrder);
-    else if (section === "more") setMoreOrder(newOrder);
-    else if (section === "test") setTestOrder(newOrder);
+    // If same section, reorder within
+    if (dragSourceSection === section) {
+      const currentOrder = tabsList.map(t => t.id);
+      const dragIdx = currentOrder.indexOf(draggedSidebarItem);
+      const targetIdx = currentOrder.indexOf(targetId);
+      if (dragIdx === -1 || targetIdx === -1) return;
+      
+      const newOrder = [...currentOrder];
+      newOrder.splice(dragIdx, 1);
+      newOrder.splice(targetIdx, 0, draggedSidebarItem);
+      
+      if (section === "core") setSidebarOrder(newOrder);
+      else if (section === "more") setMoreOrder(newOrder);
+      else if (section === "test") setTestOrder(newOrder);
+    }
   };
 
-  const handleSidebarDrop = (e: React.DragEvent) => {
+  const handleSectionDrop = (e: React.DragEvent, targetSection: "core" | "more" | "test") => {
     e.preventDefault();
+    if (!draggedSidebarItem) return;
+    
+    // Move item to new section if different
+    if (dragSourceSection && dragSourceSection !== targetSection) {
+      setSectionAssignments(prev => ({
+        ...prev,
+        [draggedSidebarItem]: targetSection,
+      }));
+      
+      // Remove from old section's order
+      if (dragSourceSection === "core") {
+        setSidebarOrder(prev => prev ? prev.filter(id => id !== draggedSidebarItem) : prev);
+      } else if (dragSourceSection === "more") {
+        setMoreOrder(prev => prev ? prev.filter(id => id !== draggedSidebarItem) : prev);
+      } else if (dragSourceSection === "test") {
+        setTestOrder(prev => prev ? prev.filter(id => id !== draggedSidebarItem) : prev);
+      }
+
+      toast({
+        title: "Module Moved",
+        description: `Moved to ${targetSection === "core" ? "Main" : targetSection === "more" ? "More Features" : "Test Features"}`,
+      });
+    }
+    
     setDraggedSidebarItem(null);
-    setDragSection(null);
+    setDragSourceSection(null);
   };
 
   const toggleEditMode = () => {
@@ -728,18 +761,7 @@ const Admin = () => {
     { id: "settings" as AdminTab, label: "Settings", icon: Settings, visible: permissions.can_view_settings },
   ].filter(tab => tab.visible);
 
-  // Apply saved sidebar order
-  const sortedCoreTabs = (() => {
-    if (!sidebarOrder || sidebarOrder.length === 0) return coreTabs;
-    const orderMap = new Map(sidebarOrder.map((id, idx) => [id, idx]));
-    return [...coreTabs].sort((a, b) => {
-      const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
-      const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
-      return aIdx - bIdx;
-    });
-  })();
-
-  // More Features - 25 new enterprise modules grouped by subsection
+  // More Features
   const moreFeaturesSections = [
     {
       label: "Search & Actions",
@@ -806,12 +828,40 @@ const Admin = () => {
     { id: "test-section-manager" as AdminTab, label: "Section Manager", icon: Move, visible: isSuperAdmin },
   ].filter(t => t.visible);
 
-  // Flatten all more features for drag reordering
-  const allMoreItems = moreFeaturesSections.flatMap(s => s.items).filter(i => i.visible);
+  // Build master list with default sections
+  const allMoreItemsRaw = moreFeaturesSections.flatMap(s => s.items).filter(i => i.visible);
+  
+  type SidebarItem = { id: AdminTab; label: string; icon: any; visible: boolean; badge?: number; defaultSection: "core" | "more" | "test" };
+  const allItems: SidebarItem[] = [
+    ...coreTabs.map(t => ({ ...t, defaultSection: "core" as const })),
+    ...allMoreItemsRaw.map(t => ({ ...t, defaultSection: "more" as const, badge: undefined as number | undefined })),
+    ...testFeaturesTabs.map(t => ({ ...t, defaultSection: "test" as const, badge: undefined as number | undefined })),
+  ];
+
+  const getEffectiveSection = (id: string, defaultSection: "core" | "more" | "test") => {
+    return sectionAssignments[id] || defaultSection;
+  };
+
+  // Split items by effective section
+  const effectiveCoreTabs = allItems.filter(item => getEffectiveSection(item.id, item.defaultSection) === "core");
+  const effectiveMoreItems = allItems.filter(item => getEffectiveSection(item.id, item.defaultSection) === "more");
+  const effectiveTestItems = allItems.filter(item => getEffectiveSection(item.id, item.defaultSection) === "test");
+
+  // Apply saved order
+  const sortedCoreTabs = (() => {
+    if (!sidebarOrder || sidebarOrder.length === 0) return effectiveCoreTabs;
+    const orderMap = new Map(sidebarOrder.map((id, idx) => [id, idx]));
+    return [...effectiveCoreTabs].sort((a, b) => {
+      const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
+      const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
+      return aIdx - bIdx;
+    });
+  })();
+
   const sortedMoreItems = (() => {
-    if (!moreOrder || moreOrder.length === 0) return allMoreItems;
+    if (!moreOrder || moreOrder.length === 0) return effectiveMoreItems;
     const orderMap = new Map(moreOrder.map((id, idx) => [id, idx]));
-    return [...allMoreItems].sort((a, b) => {
+    return [...effectiveMoreItems].sort((a, b) => {
       const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
       const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
       return aIdx - bIdx;
@@ -819,19 +869,16 @@ const Admin = () => {
   })();
 
   const sortedTestTabs = (() => {
-    if (!testOrder || testOrder.length === 0) return testFeaturesTabs;
+    if (!testOrder || testOrder.length === 0) return effectiveTestItems;
     const orderMap = new Map(testOrder.map((id, idx) => [id, idx]));
-    return [...testFeaturesTabs].sort((a, b) => {
+    return [...effectiveTestItems].sort((a, b) => {
       const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999;
       const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999;
       return aIdx - bIdx;
     });
   })();
 
-  const allMoreFeatureIds = moreFeaturesSections.flatMap(s => s.items.map(i => i.id));
-  const allTestFeatureIds = testFeaturesTabs.map(t => t.id);
-
-  const tabs = sortedCoreTabs; // sorted by saved order
+  const tabs = sortedCoreTabs;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -1181,11 +1228,17 @@ const Admin = () => {
           {/* Edit mode banner */}
           {editMode && (
             <div className="mb-3 p-2 rounded-lg bg-primary/10 border border-primary/20 text-center">
-              <p className="text-[11px] font-medium text-primary">✏️ Drag items to reorder</p>
+              <p className="text-[11px] font-medium text-primary">✏️ Drag items to reorder or move between sections</p>
             </div>
           )}
           {/* Core tabs */}
-          <div className="space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
+          {editMode && draggedSidebarItem && dragSourceSection !== "core" && (
+            <div className="mb-1 py-2 text-center text-[10px] font-medium text-primary border-2 border-dashed border-primary/30 rounded-lg bg-primary/5"
+              onDrop={(e) => handleSectionDrop(e, "core")} onDragOver={(e) => e.preventDefault()}>
+              ↓ Drop here for Main Section
+            </div>
+          )}
+          <div className="space-y-0.5" onDrop={(e) => handleSectionDrop(e, "core")} onDragOver={(e) => e.preventDefault()}>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -1236,7 +1289,12 @@ const Admin = () => {
             </button>
 
             {moreFeaturesOpen && (
-              <div className="mt-1 space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
+              <div className="mt-1 space-y-0.5" onDrop={(e) => handleSectionDrop(e, "more")} onDragOver={(e) => e.preventDefault()}>
+                {editMode && draggedSidebarItem && dragSourceSection !== "more" && (
+                  <div className="py-2 text-center text-[10px] font-medium text-accent border-2 border-dashed border-accent/30 rounded-lg bg-accent/5">
+                    ↓ Drop here for More Features
+                  </div>
+                )}
                 {editMode ? (
                   // Flat draggable list in edit mode
                   sortedMoreItems.map((item) => (
@@ -1321,7 +1379,12 @@ const Admin = () => {
               </button>
 
               {testFeaturesOpen && (
-                <div className="mt-1 space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
+                <div className="mt-1 space-y-0.5" onDrop={(e) => handleSectionDrop(e, "test")} onDragOver={(e) => e.preventDefault()}>
+                  {editMode && draggedSidebarItem && dragSourceSection !== "test" && (
+                    <div className="py-2 text-center text-[10px] font-medium text-yellow-600 dark:text-yellow-400 border-2 border-dashed border-yellow-500/30 rounded-lg bg-yellow-500/5">
+                      ↓ Drop here for Test Features
+                    </div>
+                  )}
                   {sortedTestTabs.map((item) => (
                     <button
                       key={item.id}
