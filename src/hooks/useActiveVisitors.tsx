@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 import { useLocation } from "react-router-dom";
 
 interface VisitorPresence {

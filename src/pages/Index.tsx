@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
 import ServiceCard from "@/components/ServiceCard";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import {
   HardDrive, RefreshCw, KeyRound, Wrench, Shield, Zap, ArrowRight, Phone, Clock, Award,

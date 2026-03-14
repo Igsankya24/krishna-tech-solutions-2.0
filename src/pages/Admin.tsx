@@ -62,7 +62,7 @@ import AdminBlogAds from "@/components/admin/AdminBlogAds";
 import AdminTestimonials from "@/components/admin/AdminTestimonials";
 import AdminPaymentGateway from "@/components/admin/AdminPaymentGateway";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 import { useToast } from "@/hooks/use-toast";
 import {
   Popover,

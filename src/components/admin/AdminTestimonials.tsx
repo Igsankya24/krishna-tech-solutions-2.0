@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Star, GripVertical, Upload } from "lucide-react";
 import {
