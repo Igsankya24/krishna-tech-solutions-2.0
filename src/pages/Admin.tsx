@@ -190,6 +190,9 @@ const Admin = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [moreFeaturesOpen, setMoreFeaturesOpen] = useState(false);
   const [testFeaturesOpen, setTestFeaturesOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [sidebarOrder, setSidebarOrder] = useState<string[] | null>(null);
+  const [draggedSidebarItem, setDraggedSidebarItem] = useState<string | null>(null);
   const [selectedAppointmentForInvoice, setSelectedAppointmentForInvoice] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({ 
     totalUsers: 0, 
