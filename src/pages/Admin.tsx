@@ -303,6 +303,9 @@ const Admin = () => {
     setDraggedSidebarItem(id);
     setDragSourceSection(section);
     e.dataTransfer.effectAllowed = "move";
+    // Auto-expand sections so user can drop into them
+    setMoreFeaturesOpen(true);
+    setTestFeaturesOpen(true);
   };
 
   const handleSidebarDragOver = (e: React.DragEvent, targetId: string, tabsList: { id: string }[], section: "core" | "more" | "test") => {
