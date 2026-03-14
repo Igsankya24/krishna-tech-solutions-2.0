@@ -2,7 +2,7 @@ import { LucideIcon, Calendar, ChevronDown, ExternalLink, FolderOpen } from "luc
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -3,7 +3,7 @@ import { MessageCircle, X, Send, Clock, User, Mail, Phone, Tag, Briefcase, Exter
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import {

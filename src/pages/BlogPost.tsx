@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 import { Calendar, User, Eye, ArrowLeft, Share2, Tag, Folder } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

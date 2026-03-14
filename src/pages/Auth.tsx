@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { ShieldCheck, Loader2, Eye, EyeOff, ArrowLeft, Monitor } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 import {
   InputOTP,
   InputOTPGroup,

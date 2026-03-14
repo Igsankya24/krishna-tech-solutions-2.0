@@ -6,7 +6,7 @@ import Chatbot from "@/components/Chatbot";
 import BookingPopup from "@/components/BookingPopup";
 import Maintenance from "@/pages/Maintenance";
 import { useMaintenanceMode } from "@/hooks/useMaintenanceMode";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 
 interface LayoutProps {
   children: ReactNode;

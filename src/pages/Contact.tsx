@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Phone, Mail, MapPin, Clock, Send, MessageSquare } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 interface Service {

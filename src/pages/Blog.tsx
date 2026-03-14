@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Calendar, User, ArrowRight, Tag, Folder, X } from "lucide-react";
 import { Button } from "@/components/ui/button";

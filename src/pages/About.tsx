@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/services/database";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Users, Target, Award, Heart, CheckCircle2, ArrowRight, Mail, Phone, Linkedin, Twitter } from "lucide-react";
 
