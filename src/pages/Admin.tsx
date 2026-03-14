@@ -1164,8 +1164,8 @@ const Admin = () => {
               <button
                 key={tab.id}
                 draggable={editMode}
-                onDragStart={editMode ? (e) => handleSidebarDragStart(e, tab.id) : undefined}
-                onDragOver={editMode ? (e) => handleSidebarDragOver(e, tab.id, tabs) : undefined}
+                onDragStart={editMode ? (e) => handleSidebarDragStart(e, tab.id, "core") : undefined}
+                onDragOver={editMode ? (e) => handleSidebarDragOver(e, tab.id, tabs, "core") : undefined}
                 onClick={() => {
                   if (!editMode) {
                     setActiveTab(tab.id);
