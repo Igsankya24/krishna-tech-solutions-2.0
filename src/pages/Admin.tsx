@@ -1036,14 +1036,16 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Sidebar Toggle */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-3.5 left-3.5 z-50 p-2.5 bg-card rounded-xl border border-border shadow-sm"
-        aria-label="Toggle sidebar"
-      >
-        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
+      {/* Mobile Sidebar Toggle - only visible on mobile */}
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="lg:hidden fixed top-3.5 left-3.5 z-50 p-2.5 bg-card rounded-xl border border-border shadow-sm"
+          aria-label="Toggle sidebar"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      )}
 
       {/* Sidebar */}
       <aside
