@@ -1298,7 +1298,7 @@ const Admin = () => {
       )}
 
       {/* Main Content */}
-      <div className="lg:ml-[15.5rem] flex flex-col min-h-screen">
+      <div className="md:ml-[15.5rem] flex flex-col min-h-screen">
         {/* Top Bar */}
         <header className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-3 flex items-center justify-end gap-2 sticky top-0 z-20">
           <ThemeToggle />
