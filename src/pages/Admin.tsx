@@ -1346,12 +1346,6 @@ const Admin = () => {
                       <span className="truncate">{item.label}</span>
                     </button>
                   ))}
-                      aria-current={activeTab === item.id ? "page" : undefined}
-                    >
-                      <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                    </button>
-                  ))}
                 </div>
               )}
             </div>
