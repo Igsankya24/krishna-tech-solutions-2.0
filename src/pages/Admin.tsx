@@ -1019,30 +1019,84 @@ const Admin = () => {
           <p className="text-[11px] text-muted-foreground mt-0.5">Krishna Tech Solutions</p>
         </div>
 
-        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto" role="navigation">
-          {tabs.map((tab) => (
+        <nav className="flex-1 px-3 py-3 overflow-y-auto" role="navigation">
+          {/* Core tabs */}
+          <div className="space-y-0.5">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+                aria-current={activeTab === tab.id ? "page" : undefined}
+              >
+                <tab.icon className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{tab.label}</span>
+                {tab.badge && tab.badge > 0 && (
+                  <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0.5 rounded-full leading-none font-semibold">
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* More Features - collapsible section */}
+          <div className="mt-4 border-t border-border pt-3">
             <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setSidebarOpen(false);
-              }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-              aria-current={activeTab === tab.id ? "page" : undefined}
+              onClick={() => setMoreFeaturesOpen(!moreFeaturesOpen)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-semibold text-foreground hover:bg-muted transition-all duration-150"
             >
-              <tab.icon className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">{tab.label}</span>
-              {tab.badge && tab.badge > 0 && (
-                <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0.5 rounded-full leading-none font-semibold">
-                  {tab.badge}
-                </span>
-              )}
+              <Layers className="w-4 h-4 flex-shrink-0 text-primary" />
+              <span className="flex-1 text-left">More Features</span>
+              {moreFeaturesOpen
+                ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+              }
             </button>
-          ))}
+
+            {moreFeaturesOpen && (
+              <div className="mt-1 space-y-3">
+                {moreFeaturesSections.map((section) => {
+                  const visibleItems = section.items.filter(i => i.visible);
+                  if (visibleItems.length === 0) return null;
+                  return (
+                    <div key={section.label}>
+                      <p className="px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        {section.label}
+                      </p>
+                      <div className="space-y-0.5">
+                        {visibleItems.map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => {
+                              setActiveTab(item.id);
+                              setSidebarOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 ${
+                              activeTab === item.id
+                                ? "bg-primary text-primary-foreground shadow-sm"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
+                            aria-current={activeTab === item.id ? "page" : undefined}
+                          >
+                            <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="truncate">{item.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="p-3 border-t border-border flex-shrink-0">
