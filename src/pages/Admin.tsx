@@ -701,7 +701,17 @@ const Admin = () => {
     },
   ];
 
+  const testFeaturesTabs = [
+    { id: "test-command-palette" as AdminTab, label: "Command Palette", icon: Command, visible: isSuperAdmin },
+    { id: "test-realtime-dashboard" as AdminTab, label: "Real-Time Dashboard", icon: Radio, visible: isSuperAdmin },
+    { id: "test-ai-assistant" as AdminTab, label: "AI Admin Assistant", icon: BrainCircuit, visible: isSuperAdmin },
+    { id: "test-smart-alerts" as AdminTab, label: "Smart Alerts", icon: BellRing, visible: isSuperAdmin },
+    { id: "test-performance-monitor" as AdminTab, label: "Performance Monitoring", icon: Gauge, visible: isSuperAdmin },
+    { id: "test-section-manager" as AdminTab, label: "Section Manager", icon: Move, visible: isSuperAdmin },
+  ].filter(t => t.visible);
+
   const allMoreFeatureIds = moreFeaturesSections.flatMap(s => s.items.map(i => i.id));
+  const allTestFeatureIds = testFeaturesTabs.map(t => t.id);
 
   const tabs = coreTabs; // kept for renderContent compatibility
 
