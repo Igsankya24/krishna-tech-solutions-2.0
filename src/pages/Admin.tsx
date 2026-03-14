@@ -97,6 +97,7 @@ import AdminTestimonials from "@/components/admin/AdminTestimonials";
 import AdminPaymentGateway from "@/components/admin/AdminPaymentGateway";
 import AdminBackupRestore from "@/components/admin/AdminBackupRestore";
 import AdminSmartSearch from "@/components/admin/AdminSmartSearch";
+import AdminHeaderSearch from "@/components/admin/AdminHeaderSearch";
 import AdminAuditLogs from "@/components/admin/AdminAuditLogs";
 import AdminSystemHealth from "@/components/admin/AdminSystemHealth";
 import AdminCRM from "@/components/admin/AdminCRM";
