@@ -194,7 +194,10 @@ const Admin = () => {
   const [testFeaturesOpen, setTestFeaturesOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [sidebarOrder, setSidebarOrder] = useState<string[] | null>(null);
+  const [moreOrder, setMoreOrder] = useState<string[] | null>(null);
+  const [testOrder, setTestOrder] = useState<string[] | null>(null);
   const [draggedSidebarItem, setDraggedSidebarItem] = useState<string | null>(null);
+  const [dragSection, setDragSection] = useState<"core" | "more" | "test" | null>(null);
   const [selectedAppointmentForInvoice, setSelectedAppointmentForInvoice] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({ 
     totalUsers: 0, 
