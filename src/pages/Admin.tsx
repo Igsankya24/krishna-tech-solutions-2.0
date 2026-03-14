@@ -1036,14 +1036,16 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Sidebar Toggle */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-3.5 left-3.5 z-50 p-2.5 bg-card rounded-xl border border-border shadow-sm"
-        aria-label="Toggle sidebar"
-      >
-        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
+      {/* Mobile Sidebar Toggle - only visible on mobile */}
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="lg:hidden fixed top-3.5 left-3.5 z-50 p-2.5 bg-card rounded-xl border border-border shadow-sm"
+          aria-label="Toggle sidebar"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      )}
 
       {/* Sidebar */}
       <aside
@@ -1208,6 +1210,17 @@ const Admin = () => {
         {/* Top Bar */}
         <header className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-3 flex items-center justify-end gap-2 sticky top-0 z-20">
           <ThemeToggle />
+          {isSuperAdmin && (
+            <button
+              onClick={() => setActiveTab("test-section-manager")}
+              className={`p-2 rounded-lg transition-colors ${
+                activeTab === "test-section-manager" ? "bg-primary/10 text-primary" : "hover:bg-muted text-muted-foreground hover:text-foreground"
+              }`}
+              title="Edit Admin Panel"
+            >
+              <Palette className="w-5 h-5" />
+            </button>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <button className="relative p-2 rounded-lg hover:bg-muted transition-colors">
