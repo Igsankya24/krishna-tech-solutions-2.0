@@ -1225,7 +1225,7 @@ const Admin = () => {
           {/* Edit mode banner */}
           {editMode && (
             <div className="mb-3 p-2 rounded-lg bg-primary/10 border border-primary/20 text-center">
-              <p className="text-[11px] font-medium text-primary">✏️ Drag items to reorder</p>
+              <p className="text-[11px] font-medium text-primary">✏️ Drag items to reorder or move between sections</p>
             </div>
           )}
           {/* Core tabs */}
