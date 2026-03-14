@@ -1304,13 +1304,13 @@ const Admin = () => {
           <ThemeToggle />
           {isSuperAdmin && (
             <button
-              onClick={() => setActiveTab("test-section-manager")}
+              onClick={toggleEditMode}
               className={`p-2 rounded-lg transition-colors ${
-                activeTab === "test-section-manager" ? "bg-primary/10 text-primary" : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                editMode ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground hover:text-foreground"
               }`}
-              title="Edit Admin Panel"
+              title={editMode ? "Save & Exit Edit Mode" : "Edit Admin Panel Layout"}
             >
-              <Palette className="w-5 h-5" />
+              <Pencil className="w-5 h-5" />
             </button>
           )}
           <Popover>
