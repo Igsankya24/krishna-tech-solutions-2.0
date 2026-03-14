@@ -329,6 +329,10 @@ const Admin = () => {
   const toggleEditMode = () => {
     if (editMode) {
       saveAllOrders();
+    } else {
+      // Auto-expand sections when entering edit mode
+      setMoreFeaturesOpen(true);
+      setTestFeaturesOpen(true);
     }
     setEditMode(!editMode);
   };
