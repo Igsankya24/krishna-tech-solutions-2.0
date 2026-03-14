@@ -81,6 +81,13 @@ const formatBytes = (bytes: number) => {
 
 // ─── Sub-components ───────────────────────────────────────
 
+const SCHEDULE_OPTIONS = [
+  { value: "hourly", label: "Hourly", description: "Every hour" },
+  { value: "daily", label: "Daily", description: "Once a day at 2:00 AM UTC" },
+  { value: "weekly", label: "Weekly", description: "Every Sunday at 2:00 AM UTC" },
+  { value: "disabled", label: "Disabled", description: "No automatic backups" },
+];
+
 function BackupTab({
   isCreating,
   progress,
@@ -90,6 +97,38 @@ function BackupTab({
   progress: number;
   onCreateBackup: () => void;
 }) {
+  const [schedule, setSchedule] = useState("daily");
+  const [loadingSchedule, setLoadingSchedule] = useState(true);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "backup_schedule").maybeSingle();
+      if (data?.value) setSchedule(data.value);
+      setLoadingSchedule(false);
+    };
+    load();
+  }, []);
+
+  const saveSchedule = async (value: string) => {
+    setSchedule(value);
+    setSavingSchedule(true);
+    try {
+      await supabase.from("site_settings").upsert(
+        { key: "backup_schedule", value } as any,
+        { onConflict: "key" }
+      );
+      toast({ title: "Schedule Updated", description: `Automatic backups set to: ${value}` });
+    } catch {
+      toast({ title: "Failed to save", variant: "destructive" });
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
+
+  const activeOption = SCHEDULE_OPTIONS.find(o => o.value === schedule);
+
   return (
     <div className="space-y-4">
       <Card>
@@ -134,18 +173,52 @@ function BackupTab({
         </CardContent>
       </Card>
 
-      {/* Scheduled backup info */}
+      {/* Configurable schedule */}
       <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="pt-4">
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-primary flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-foreground">Automatic Daily Backups</p>
-              <p className="text-xs text-muted-foreground">
-                Scheduled backups run daily at 2:00 AM UTC. Backup files are stored in secure cloud storage and metadata is logged in the History tab.
-              </p>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Clock className="w-5 h-5 text-primary" />
+            Automatic Backup Schedule
+          </CardTitle>
+          <CardDescription>
+            Configure how often automatic backups run. The system will create and store backups in cloud storage automatically.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {loadingSchedule ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" /> Loading schedule...
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {SCHEDULE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => saveSchedule(option.value)}
+                  disabled={savingSchedule}
+                  className={`relative rounded-lg border p-3 text-left transition-all ${
+                    schedule === option.value
+                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                      : "border-border bg-background hover:border-primary/50"
+                  } ${savingSchedule ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                >
+                  <p className={`text-sm font-medium ${schedule === option.value ? "text-primary" : "text-foreground"}`}>
+                    {option.label}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{option.description}</p>
+                  {schedule === option.value && (
+                    <CheckCircle2 className="absolute top-2 right-2 w-4 h-4 text-primary" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+          {activeOption && schedule !== "disabled" && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5" />
+              Backup files are stored in secure cloud storage and logged in the History tab.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
