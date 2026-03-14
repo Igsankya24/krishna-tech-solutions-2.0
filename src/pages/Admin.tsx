@@ -124,6 +124,7 @@ import TestSectionManager from "@/components/admin/TestSectionManager";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/services/database";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
