@@ -35,7 +35,8 @@ import {
   Newspaper,
   Star,
   Megaphone,
-  CreditCard
+  CreditCard,
+  DatabaseBackup
 } from "lucide-react";
 import AdminServices from "@/components/admin/AdminServices";
 import AdminSettings from "@/components/admin/AdminSettings";
