@@ -61,6 +61,13 @@ import {
   ChevronDown,
   ChevronRight,
   Layers,
+  Beaker,
+  Command,
+  Radio,
+  BrainCircuit,
+  BellRing,
+  Gauge,
+  Move,
 } from "lucide-react";
 import AdminServices from "@/components/admin/AdminServices";
 import AdminSettings from "@/components/admin/AdminSettings";
@@ -108,9 +115,16 @@ import AdminReportsGenerator from "@/components/admin/AdminReportsGenerator";
 import AdminFeedbackDashboard from "@/components/admin/AdminFeedbackDashboard";
 import AdminSystemSettings from "@/components/admin/AdminSystemSettings";
 import AdminMultiLanguage from "@/components/admin/AdminMultiLanguage";
+import TestCommandPalette from "@/components/admin/TestCommandPalette";
+import TestRealtimeDashboard from "@/components/admin/TestRealtimeDashboard";
+import TestAIAssistant from "@/components/admin/TestAIAssistant";
+import TestSmartAlerts from "@/components/admin/TestSmartAlerts";
+import TestPerformanceMonitor from "@/components/admin/TestPerformanceMonitor";
+import TestSectionManager from "@/components/admin/TestSectionManager";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/services/database";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -127,7 +141,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 type AdminTab = "dashboard" | "analytics" | "traffic" | "appointments" | "users" | "services" | "service-projects" | "coupons" | "messages" | "bot" | "settings" | "profile" | "permissions" | "deletion-requests" | "customization" | "user-permissions" | "user-access" | "invoices" | "technicians" | "api-keys" | "team-members" | "blog" | "blog-ads" | "testimonials" | "payment-gateway" | "backup-restore"
-  | "smart-search" | "audit-logs" | "system-health" | "crm" | "automation" | "file-manager" | "role-matrix" | "ai-insights" | "admin-notes" | "feature-flags" | "scheduled-jobs" | "data-export" | "data-import" | "api-usage" | "quick-actions" | "security-dashboard" | "backup-checker" | "reports" | "feedback" | "system-settings" | "multi-language";
+  | "smart-search" | "audit-logs" | "system-health" | "crm" | "automation" | "file-manager" | "role-matrix" | "ai-insights" | "admin-notes" | "feature-flags" | "scheduled-jobs" | "data-export" | "data-import" | "api-usage" | "quick-actions" | "security-dashboard" | "backup-checker" | "reports" | "feedback" | "system-settings" | "multi-language"
+  | "test-command-palette" | "test-realtime-dashboard" | "test-ai-assistant" | "test-smart-alerts" | "test-performance-monitor" | "test-section-manager";
 
 interface DashboardStats {
   totalUsers: number;
@@ -174,6 +189,7 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [moreFeaturesOpen, setMoreFeaturesOpen] = useState(false);
+  const [testFeaturesOpen, setTestFeaturesOpen] = useState(false);
   const [selectedAppointmentForInvoice, setSelectedAppointmentForInvoice] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({ 
     totalUsers: 0, 
@@ -686,7 +702,17 @@ const Admin = () => {
     },
   ];
 
+  const testFeaturesTabs = [
+    { id: "test-command-palette" as AdminTab, label: "Command Palette", icon: Command, visible: isSuperAdmin },
+    { id: "test-realtime-dashboard" as AdminTab, label: "Real-Time Dashboard", icon: Radio, visible: isSuperAdmin },
+    { id: "test-ai-assistant" as AdminTab, label: "AI Admin Assistant", icon: BrainCircuit, visible: isSuperAdmin },
+    { id: "test-smart-alerts" as AdminTab, label: "Smart Alerts", icon: BellRing, visible: isSuperAdmin },
+    { id: "test-performance-monitor" as AdminTab, label: "Performance Monitoring", icon: Gauge, visible: isSuperAdmin },
+    { id: "test-section-manager" as AdminTab, label: "Section Manager", icon: Move, visible: isSuperAdmin },
+  ].filter(t => t.visible);
+
   const allMoreFeatureIds = moreFeaturesSections.flatMap(s => s.items.map(i => i.id));
+  const allTestFeatureIds = testFeaturesTabs.map(t => t.id);
 
   const tabs = coreTabs; // kept for renderContent compatibility
 
@@ -990,6 +1016,19 @@ const Admin = () => {
         return isSuperAdmin ? <AdminSystemSettings /> : null;
       case "multi-language":
         return isSuperAdmin ? <AdminMultiLanguage /> : null;
+      // Test Features
+      case "test-command-palette":
+        return isSuperAdmin ? <TestCommandPalette onNavigate={(tab) => setActiveTab(tab as AdminTab)} /> : null;
+      case "test-realtime-dashboard":
+        return isSuperAdmin ? <TestRealtimeDashboard /> : null;
+      case "test-ai-assistant":
+        return isSuperAdmin ? <TestAIAssistant /> : null;
+      case "test-smart-alerts":
+        return isSuperAdmin ? <TestSmartAlerts /> : null;
+      case "test-performance-monitor":
+        return isSuperAdmin ? <TestPerformanceMonitor /> : null;
+      case "test-section-manager":
+        return isSuperAdmin ? <TestSectionManager /> : null;
       default:
         return null;
     }
@@ -1097,6 +1136,47 @@ const Admin = () => {
               </div>
             )}
           </div>
+
+          {/* Test Features - super admin only */}
+          {isSuperAdmin && testFeaturesTabs.length > 0 && (
+            <div className="mt-4 border-t border-border pt-3">
+              <button
+                onClick={() => setTestFeaturesOpen(!testFeaturesOpen)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-semibold text-foreground hover:bg-muted transition-all duration-150"
+              >
+                <Beaker className="w-4 h-4 flex-shrink-0 text-yellow-500" />
+                <span className="flex-1 text-left">Test Features</span>
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 mr-1">BETA</Badge>
+                {testFeaturesOpen
+                  ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                }
+              </button>
+
+              {testFeaturesOpen && (
+                <div className="mt-1 space-y-0.5">
+                  {testFeaturesTabs.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150 ${
+                        activeTab === item.id
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                      aria-current={activeTab === item.id ? "page" : undefined}
+                    >
+                      <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         <div className="p-3 border-t border-border flex-shrink-0">
