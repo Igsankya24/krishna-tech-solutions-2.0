@@ -193,9 +193,13 @@ const AdminBlogAds = () => {
     }
 
     if (editingAd) {
+      const updateData = {
+        ...formData,
+        post_id: formData.post_id || null,
+      };
       const { error } = await supabase
         .from("blog_ads")
-        .update(formData)
+        .update(updateData)
         .eq("id", editingAd.id);
 
       if (error) {

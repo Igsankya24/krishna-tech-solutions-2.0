@@ -143,11 +143,8 @@ const BlogPostPage = () => {
     if (data) {
       setPost(data);
       
-      // Increment view count
-      await supabase
-        .from("blog_posts")
-        .update({ views_count: (data.views_count || 0) + 1 })
-        .eq("id", data.id);
+      // Increment view count using security definer function
+      supabase.rpc('increment_blog_views', { post_id: data.id }).then(() => {});
 
       // Fetch category
       if (data.category_id) {
