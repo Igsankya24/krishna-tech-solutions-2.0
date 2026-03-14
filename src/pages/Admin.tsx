@@ -688,7 +688,6 @@ const Admin = () => {
 
   // Check if active tab is in more features (to auto-expand)
   const allMoreFeatureIds = moreFeaturesSections.flatMap(s => s.items.map(i => i.id));
-  const [moreFeaturesOpen, setMoreFeaturesOpen] = useState(() => allMoreFeatureIds.includes(activeTab));
 
   // Auto-expand when navigating to a "more features" tab
   useEffect(() => {
