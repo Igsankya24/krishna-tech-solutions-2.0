@@ -61,6 +61,13 @@ import {
   ChevronDown,
   ChevronRight,
   Layers,
+  Beaker,
+  Command,
+  Radio,
+  BrainCircuit,
+  BellRing,
+  Gauge,
+  Move,
 } from "lucide-react";
 import AdminServices from "@/components/admin/AdminServices";
 import AdminSettings from "@/components/admin/AdminSettings";
