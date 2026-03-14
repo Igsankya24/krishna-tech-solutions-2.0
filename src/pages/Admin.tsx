@@ -788,7 +788,7 @@ const Admin = () => {
   const allMoreFeatureIds = moreFeaturesSections.flatMap(s => s.items.map(i => i.id));
   const allTestFeatureIds = testFeaturesTabs.map(t => t.id);
 
-  const tabs = coreTabs; // kept for renderContent compatibility
+  const tabs = sortedCoreTabs; // sorted by saved order
 
   const renderContent = () => {
     switch (activeTab) {
