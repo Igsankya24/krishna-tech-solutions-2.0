@@ -88,7 +88,7 @@ const UserDashboard = () => {
   const [rescheduling, setRescheduling] = useState(false);
 
   // Idle timeout for auto-logout
-  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState<number>(15);
+  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState<number>(60);
   
   const handleSignOut = useCallback(async () => {
     await signOut();
