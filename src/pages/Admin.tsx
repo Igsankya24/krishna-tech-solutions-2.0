@@ -576,6 +576,7 @@ const Admin = () => {
     { id: "user-permissions" as AdminTab, label: "User Roles", icon: UserCog, visible: isSuperAdmin },
     { id: "permissions" as AdminTab, label: "Admin Permissions", icon: Shield, visible: isSuperAdmin },
     { id: "api-keys" as AdminTab, label: "API Keys", icon: Key, visible: isSuperAdmin },
+    { id: "backup-restore" as AdminTab, label: "Backup & Restore", icon: DatabaseBackup, visible: isSuperAdmin },
     { id: "payment-gateway" as AdminTab, label: "Payment Gateway", icon: CreditCard, visible: isSuperAdmin },
     { id: "deletion-requests" as AdminTab, label: "Deletion Requests", icon: Trash2, badge: stats.pendingDeletionRequests > 0 ? stats.pendingDeletionRequests : undefined, visible: isSuperAdmin },
     { id: "profile" as AdminTab, label: "My Profile", icon: UserCircle, visible: true },
