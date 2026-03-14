@@ -1135,22 +1135,38 @@ const Admin = () => {
         </div>
 
         <nav className="flex-1 px-3 py-3 overflow-y-auto" role="navigation">
+          {/* Edit mode banner */}
+          {editMode && (
+            <div className="mb-3 p-2 rounded-lg bg-primary/10 border border-primary/20 text-center">
+              <p className="text-[11px] font-medium text-primary">✏️ Drag items to reorder</p>
+            </div>
+          )}
           {/* Core tabs */}
-          <div className="space-y-0.5">
+          <div className="space-y-0.5" onDrop={handleSidebarDrop} onDragOver={(e) => e.preventDefault()}>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                draggable={editMode}
+                onDragStart={editMode ? (e) => handleSidebarDragStart(e, tab.id) : undefined}
+                onDragOver={editMode ? (e) => handleSidebarDragOver(e, tab.id, tabs) : undefined}
                 onClick={() => {
-                  setActiveTab(tab.id);
-                  setSidebarOpen(false);
+                  if (!editMode) {
+                    setActiveTab(tab.id);
+                    setSidebarOpen(false);
+                  }
                 }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
-                  activeTab === tab.id
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  editMode
+                    ? draggedSidebarItem === tab.id
+                      ? "opacity-50 bg-muted border border-dashed border-primary"
+                      : "cursor-grab active:cursor-grabbing hover:bg-muted/70 border border-transparent hover:border-primary/30"
+                    : activeTab === tab.id
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
-                aria-current={activeTab === tab.id ? "page" : undefined}
+                aria-current={!editMode && activeTab === tab.id ? "page" : undefined}
               >
+                {editMode && <GripVertical className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
                 <tab.icon className="w-4 h-4 flex-shrink-0" />
                 <span className="truncate">{tab.label}</span>
                 {tab.badge && tab.badge > 0 && (
