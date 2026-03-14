@@ -810,6 +810,8 @@ const Admin = () => {
         return <AdminApiKeys isSuperAdmin={isSuperAdmin} />;
       case "payment-gateway":
         return isSuperAdmin ? <AdminPaymentGateway /> : null;
+      case "backup-restore":
+        return isSuperAdmin ? <AdminBackupRestore /> : null;
       case "users":
         return <AdminUsers />;
       case "coupons":
