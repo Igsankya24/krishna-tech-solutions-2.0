@@ -219,7 +219,7 @@ const Admin = () => {
   }, [signOut, navigate]);
 
   // Idle timeout for auto-logout (configurable from settings)
-  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState<number>(15);
+  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState<number>(60);
   
   useEffect(() => {
     const fetchIdleTimeout = async () => {
