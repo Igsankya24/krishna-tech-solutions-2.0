@@ -140,7 +140,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 type AdminTab = "dashboard" | "analytics" | "traffic" | "appointments" | "users" | "services" | "service-projects" | "coupons" | "messages" | "bot" | "settings" | "profile" | "permissions" | "deletion-requests" | "customization" | "user-permissions" | "user-access" | "invoices" | "technicians" | "api-keys" | "team-members" | "blog" | "blog-ads" | "testimonials" | "payment-gateway" | "backup-restore"
-  | "smart-search" | "audit-logs" | "system-health" | "crm" | "automation" | "file-manager" | "role-matrix" | "ai-insights" | "admin-notes" | "feature-flags" | "scheduled-jobs" | "data-export" | "data-import" | "api-usage" | "quick-actions" | "security-dashboard" | "backup-checker" | "reports" | "feedback" | "system-settings" | "multi-language";
+  | "smart-search" | "audit-logs" | "system-health" | "crm" | "automation" | "file-manager" | "role-matrix" | "ai-insights" | "admin-notes" | "feature-flags" | "scheduled-jobs" | "data-export" | "data-import" | "api-usage" | "quick-actions" | "security-dashboard" | "backup-checker" | "reports" | "feedback" | "system-settings" | "multi-language"
+  | "test-command-palette" | "test-realtime-dashboard" | "test-ai-assistant" | "test-smart-alerts" | "test-performance-monitor" | "test-section-manager";
 
 interface DashboardStats {
   totalUsers: number;
