@@ -103,7 +103,7 @@ const UserDashboard = () => {
         .eq("key", "idle_timeout_minutes")
         .single();
       if (data?.value) {
-        setIdleTimeoutMinutes(parseInt(data.value) || 15);
+        setIdleTimeoutMinutes(parseInt(data.value) || 60);
       }
     };
     fetchIdleTimeout();
