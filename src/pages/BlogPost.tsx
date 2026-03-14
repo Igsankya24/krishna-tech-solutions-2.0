@@ -143,11 +143,12 @@ const BlogPostPage = () => {
     if (data) {
       setPost(data);
       
-      // Increment view count
-      await supabase
+      // Increment view count (may fail for non-admin users due to RLS, which is fine)
+      supabase
         .from("blog_posts")
         .update({ views_count: (data.views_count || 0) + 1 })
-        .eq("id", data.id);
+        .eq("id", data.id)
+        .then(() => {});
 
       // Fetch category
       if (data.category_id) {
