@@ -12,10 +12,47 @@ export interface AdminPermissions {
   can_manage_users: boolean;
   can_view_services: boolean;
   can_manage_services: boolean;
+  can_view_service_projects: boolean;
+  can_manage_service_projects: boolean;
   can_view_coupons: boolean;
   can_manage_coupons: boolean;
   can_view_settings: boolean;
   can_manage_settings: boolean;
+  can_view_invoices: boolean;
+  can_manage_invoices: boolean;
+  can_view_technicians: boolean;
+  can_manage_technicians: boolean;
+  can_view_analytics: boolean;
+  can_view_traffic: boolean;
+  can_export_data: boolean;
+  can_view_api_keys: boolean;
+  can_manage_api_keys: boolean;
+  can_view_bot_settings: boolean;
+  can_manage_bot_settings: boolean;
+  can_view_deletion_requests: boolean;
+  can_manage_deletion_requests: boolean;
+  can_view_blog: boolean;
+  can_manage_blog: boolean;
+  can_view_blog_ads: boolean;
+  can_manage_blog_ads: boolean;
+  can_view_testimonials: boolean;
+  can_manage_testimonials: boolean;
+  can_view_team_members: boolean;
+  can_manage_team_members: boolean;
+  can_view_customization: boolean;
+  can_manage_customization: boolean;
+  can_view_backup: boolean;
+  can_manage_backup: boolean;
+  can_view_payment: boolean;
+  can_manage_payment: boolean;
+  can_view_crm: boolean;
+  can_manage_crm: boolean;
+  can_view_file_manager: boolean;
+  can_manage_file_manager: boolean;
+  can_view_ai_insights: boolean;
+  can_use_smart_search: boolean;
+  can_use_quick_actions: boolean;
+  can_use_notes: boolean;
 }
 
 export interface UserAccess {
@@ -35,33 +72,39 @@ const defaultUserAccess: UserAccess = {
 };
 
 const defaultPermissions: AdminPermissions = {
-  can_view_messages: true,
-  can_view_appointments: true,
-  can_confirm_appointments: true,
-  can_delete_appointments: false,
-  can_view_users: true,
-  can_manage_users: false,
-  can_view_services: true,
-  can_manage_services: false,
-  can_view_coupons: true,
-  can_manage_coupons: false,
-  can_view_settings: false,
-  can_manage_settings: false,
+  can_view_messages: true, can_view_appointments: true, can_confirm_appointments: true,
+  can_delete_appointments: false, can_view_users: true, can_manage_users: false,
+  can_view_services: true, can_manage_services: false, can_view_service_projects: true,
+  can_manage_service_projects: false, can_view_coupons: true, can_manage_coupons: false,
+  can_view_settings: false, can_manage_settings: false, can_view_invoices: true,
+  can_manage_invoices: false, can_view_technicians: true, can_manage_technicians: false,
+  can_view_analytics: true, can_view_traffic: true, can_export_data: true,
+  can_view_api_keys: false, can_manage_api_keys: false, can_view_bot_settings: true,
+  can_manage_bot_settings: false, can_view_deletion_requests: true, can_manage_deletion_requests: false,
+  can_view_blog: true, can_manage_blog: false, can_view_blog_ads: true, can_manage_blog_ads: false,
+  can_view_testimonials: true, can_manage_testimonials: false, can_view_team_members: true,
+  can_manage_team_members: false, can_view_customization: false, can_manage_customization: false,
+  can_view_backup: false, can_manage_backup: false, can_view_payment: false, can_manage_payment: false,
+  can_view_crm: false, can_manage_crm: false, can_view_file_manager: false, can_manage_file_manager: false,
+  can_view_ai_insights: false, can_use_smart_search: true, can_use_quick_actions: true, can_use_notes: true,
 };
 
 const superAdminPermissions: AdminPermissions = {
-  can_view_messages: true,
-  can_view_appointments: true,
-  can_confirm_appointments: true,
-  can_delete_appointments: true,
-  can_view_users: true,
-  can_manage_users: true,
-  can_view_services: true,
-  can_manage_services: true,
-  can_view_coupons: true,
-  can_manage_coupons: true,
-  can_view_settings: true,
-  can_manage_settings: true,
+  can_view_messages: true, can_view_appointments: true, can_confirm_appointments: true,
+  can_delete_appointments: true, can_view_users: true, can_manage_users: true,
+  can_view_services: true, can_manage_services: true, can_view_service_projects: true,
+  can_manage_service_projects: true, can_view_coupons: true, can_manage_coupons: true,
+  can_view_settings: true, can_manage_settings: true, can_view_invoices: true,
+  can_manage_invoices: true, can_view_technicians: true, can_manage_technicians: true,
+  can_view_analytics: true, can_view_traffic: true, can_export_data: true,
+  can_view_api_keys: true, can_manage_api_keys: true, can_view_bot_settings: true,
+  can_manage_bot_settings: true, can_view_deletion_requests: true, can_manage_deletion_requests: true,
+  can_view_blog: true, can_manage_blog: true, can_view_blog_ads: true, can_manage_blog_ads: true,
+  can_view_testimonials: true, can_manage_testimonials: true, can_view_team_members: true,
+  can_manage_team_members: true, can_view_customization: true, can_manage_customization: true,
+  can_view_backup: true, can_manage_backup: true, can_view_payment: true, can_manage_payment: true,
+  can_view_crm: true, can_manage_crm: true, can_view_file_manager: true, can_manage_file_manager: true,
+  can_view_ai_insights: true, can_use_smart_search: true, can_use_quick_actions: true, can_use_notes: true,
 };
 
 interface AuthContextType {
@@ -154,20 +197,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (data) {
-        setPermissions({
-          can_view_messages: data.can_view_messages ?? true,
-          can_view_appointments: data.can_view_appointments ?? true,
-          can_confirm_appointments: data.can_confirm_appointments ?? true,
-          can_delete_appointments: data.can_delete_appointments ?? false,
-          can_view_users: data.can_view_users ?? true,
-          can_manage_users: data.can_manage_users ?? false,
-          can_view_services: data.can_view_services ?? true,
-          can_manage_services: data.can_manage_services ?? false,
-          can_view_coupons: data.can_view_coupons ?? true,
-          can_manage_coupons: data.can_manage_coupons ?? false,
-          can_view_settings: data.can_view_settings ?? false,
-          can_manage_settings: data.can_manage_settings ?? false,
-        });
+        const mapped: AdminPermissions = {} as AdminPermissions;
+        for (const key of Object.keys(defaultPermissions) as (keyof AdminPermissions)[]) {
+          mapped[key] = (data as any)[key] ?? defaultPermissions[key];
+        }
+        setPermissions(mapped);
       } else {
         setPermissions(defaultPermissions);
       }
