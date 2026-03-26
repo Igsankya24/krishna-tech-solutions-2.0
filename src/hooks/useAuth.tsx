@@ -197,20 +197,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (data) {
-        setPermissions({
-          can_view_messages: data.can_view_messages ?? true,
-          can_view_appointments: data.can_view_appointments ?? true,
-          can_confirm_appointments: data.can_confirm_appointments ?? true,
-          can_delete_appointments: data.can_delete_appointments ?? false,
-          can_view_users: data.can_view_users ?? true,
-          can_manage_users: data.can_manage_users ?? false,
-          can_view_services: data.can_view_services ?? true,
-          can_manage_services: data.can_manage_services ?? false,
-          can_view_coupons: data.can_view_coupons ?? true,
-          can_manage_coupons: data.can_manage_coupons ?? false,
-          can_view_settings: data.can_view_settings ?? false,
-          can_manage_settings: data.can_manage_settings ?? false,
-        });
+        const mapped: AdminPermissions = {} as AdminPermissions;
+        for (const key of Object.keys(defaultPermissions) as (keyof AdminPermissions)[]) {
+          mapped[key] = (data as any)[key] ?? defaultPermissions[key];
+        }
+        setPermissions(mapped);
       } else {
         setPermissions(defaultPermissions);
       }
