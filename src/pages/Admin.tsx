@@ -711,7 +711,7 @@ const Admin = () => {
     );
   }
 
-  if (!user || !isAdmin) {
+  if (!user || !isSuperAdmin) {
     return (
       <AlertDialog open={accessDeniedOpen} onOpenChange={setAccessDeniedOpen}>
         <AlertDialogContent>
