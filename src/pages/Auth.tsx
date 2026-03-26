@@ -212,8 +212,13 @@ const Auth = () => {
           .select("role")
           .eq("user_id", data.session.user.id);
         const userRoles = roles?.map((r) => r.role) || [];
-        const isAdminUser = userRoles.includes("admin") || userRoles.includes("super_admin");
-        navigate(isAdminUser ? "/admin" : "/dashboard");
+        if (userRoles.includes("super_admin")) {
+          navigate("/super-admin");
+        } else if (userRoles.includes("admin")) {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch {
       toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });
