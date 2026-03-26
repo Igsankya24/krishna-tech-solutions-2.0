@@ -15,6 +15,7 @@ import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import UserDashboard from "./pages/UserDashboard";
+import AdminPanel from "./pages/AdminPanel";
 import Lander from "./pages/Lander";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
@@ -48,7 +49,8 @@ const App = () => {
                     <Route path="/blog" element={<Blog />} />
                     <Route path="/blog/:slug" element={<BlogPost />} />
                     <Route path="/auth" element={<Auth />} />
-                    <Route path="/admin" element={<Admin />} />
+                    <Route path="/admin" element={<AdminPanel />} />
+                    <Route path="/super-admin" element={<Admin />} />
                     <Route path="/dashboard" element={<UserDashboard />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>

@@ -57,8 +57,13 @@ const Auth = () => {
           .select("role")
           .eq("user_id", user.id);
         const userRoles = roles?.map((r) => r.role) || [];
-        const isAdminUser = userRoles.includes("admin") || userRoles.includes("super_admin");
-        navigate(isAdminUser ? "/admin" : "/dashboard");
+        if (userRoles.includes("super_admin")) {
+          navigate("/super-admin");
+        } else if (userRoles.includes("admin")) {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       };
       checkAndRedirect();
     }
@@ -161,10 +166,15 @@ const Auth = () => {
             .select("role")
             .eq("user_id", currentUser.id);
           const userRoles = roles?.map((r) => r.role) || [];
-          const isAdminUser = userRoles.includes("admin") || userRoles.includes("super_admin");
 
           toast({ title: "Welcome back!", description: "You have successfully logged in." });
-          navigate(isAdminUser ? "/admin" : "/dashboard");
+          if (userRoles.includes("super_admin")) {
+            navigate("/super-admin");
+          } else if (userRoles.includes("admin")) {
+            navigate("/admin");
+          } else {
+            navigate("/dashboard");
+          }
         }
       }
     } catch {
@@ -202,8 +212,13 @@ const Auth = () => {
           .select("role")
           .eq("user_id", data.session.user.id);
         const userRoles = roles?.map((r) => r.role) || [];
-        const isAdminUser = userRoles.includes("admin") || userRoles.includes("super_admin");
-        navigate(isAdminUser ? "/admin" : "/dashboard");
+        if (userRoles.includes("super_admin")) {
+          navigate("/super-admin");
+        } else if (userRoles.includes("admin")) {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch {
       toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });

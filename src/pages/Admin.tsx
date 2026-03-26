@@ -258,10 +258,14 @@ const Admin = () => {
   }, [user, isLoading, navigate]);
 
   useEffect(() => {
-    if (!isLoading && user && !isAdmin) {
-      setAccessDeniedOpen(true);
+    if (!isLoading && user && !isSuperAdmin) {
+      if (isAdmin) {
+        navigate("/admin");
+      } else {
+        setAccessDeniedOpen(true);
+      }
     }
-  }, [isAdmin, isLoading, user]);
+  }, [isAdmin, isSuperAdmin, isLoading, user]);
 
   // Load sidebar orders and section assignments from settings
   useEffect(() => {
@@ -707,7 +711,7 @@ const Admin = () => {
     );
   }
 
-  if (!user || !isAdmin) {
+  if (!user || !isSuperAdmin) {
     return (
       <AlertDialog open={accessDeniedOpen} onOpenChange={setAccessDeniedOpen}>
         <AlertDialogContent>
@@ -1220,7 +1224,7 @@ const Admin = () => {
       >
         <div className="px-5 py-4 border-b border-border flex-shrink-0">
           <h1 className="text-sm font-bold text-foreground font-display tracking-tight">
-            {isSuperAdmin ? "Admin Panel" : isAdmin ? "Control Panel" : "User Panel"}
+            Super Admin Panel
           </h1>
           <p className="text-[11px] text-muted-foreground mt-0.5">Krishna Tech Solutions</p>
         </div>
