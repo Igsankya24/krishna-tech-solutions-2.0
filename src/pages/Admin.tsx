@@ -1224,7 +1224,7 @@ const Admin = () => {
       >
         <div className="px-5 py-4 border-b border-border flex-shrink-0">
           <h1 className="text-sm font-bold text-foreground font-display tracking-tight">
-            {isSuperAdmin ? "Admin Panel" : isAdmin ? "Control Panel" : "User Panel"}
+            Super Admin Panel
           </h1>
           <p className="text-[11px] text-muted-foreground mt-0.5">Krishna Tech Solutions</p>
         </div>
