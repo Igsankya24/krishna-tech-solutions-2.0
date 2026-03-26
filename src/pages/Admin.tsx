@@ -258,10 +258,14 @@ const Admin = () => {
   }, [user, isLoading, navigate]);
 
   useEffect(() => {
-    if (!isLoading && user && !isAdmin) {
-      setAccessDeniedOpen(true);
+    if (!isLoading && user && !isSuperAdmin) {
+      if (isAdmin) {
+        navigate("/admin");
+      } else {
+        setAccessDeniedOpen(true);
+      }
     }
-  }, [isAdmin, isLoading, user]);
+  }, [isAdmin, isSuperAdmin, isLoading, user]);
 
   // Load sidebar orders and section assignments from settings
   useEffect(() => {
