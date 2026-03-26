@@ -15,6 +15,7 @@ import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import UserDashboard from "./pages/UserDashboard";
+import AdminPanel from "./pages/AdminPanel";
 import Lander from "./pages/Lander";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
