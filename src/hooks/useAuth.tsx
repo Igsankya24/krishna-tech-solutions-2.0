@@ -12,10 +12,47 @@ export interface AdminPermissions {
   can_manage_users: boolean;
   can_view_services: boolean;
   can_manage_services: boolean;
+  can_view_service_projects: boolean;
+  can_manage_service_projects: boolean;
   can_view_coupons: boolean;
   can_manage_coupons: boolean;
   can_view_settings: boolean;
   can_manage_settings: boolean;
+  can_view_invoices: boolean;
+  can_manage_invoices: boolean;
+  can_view_technicians: boolean;
+  can_manage_technicians: boolean;
+  can_view_analytics: boolean;
+  can_view_traffic: boolean;
+  can_export_data: boolean;
+  can_view_api_keys: boolean;
+  can_manage_api_keys: boolean;
+  can_view_bot_settings: boolean;
+  can_manage_bot_settings: boolean;
+  can_view_deletion_requests: boolean;
+  can_manage_deletion_requests: boolean;
+  can_view_blog: boolean;
+  can_manage_blog: boolean;
+  can_view_blog_ads: boolean;
+  can_manage_blog_ads: boolean;
+  can_view_testimonials: boolean;
+  can_manage_testimonials: boolean;
+  can_view_team_members: boolean;
+  can_manage_team_members: boolean;
+  can_view_customization: boolean;
+  can_manage_customization: boolean;
+  can_view_backup: boolean;
+  can_manage_backup: boolean;
+  can_view_payment: boolean;
+  can_manage_payment: boolean;
+  can_view_crm: boolean;
+  can_manage_crm: boolean;
+  can_view_file_manager: boolean;
+  can_manage_file_manager: boolean;
+  can_view_ai_insights: boolean;
+  can_use_smart_search: boolean;
+  can_use_quick_actions: boolean;
+  can_use_notes: boolean;
 }
 
 export interface UserAccess {
