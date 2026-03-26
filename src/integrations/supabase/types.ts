@@ -20,29 +20,50 @@ export type Database = {
           can_delete_appointments: boolean | null
           can_export_data: boolean | null
           can_manage_api_keys: boolean | null
+          can_manage_backup: boolean | null
           can_manage_blog: boolean | null
           can_manage_blog_ads: boolean | null
           can_manage_bot_settings: boolean | null
           can_manage_coupons: boolean | null
+          can_manage_crm: boolean | null
+          can_manage_customization: boolean | null
           can_manage_deletion_requests: boolean | null
+          can_manage_file_manager: boolean | null
           can_manage_invoices: boolean | null
+          can_manage_payment: boolean | null
+          can_manage_service_projects: boolean | null
           can_manage_services: boolean | null
           can_manage_settings: boolean | null
+          can_manage_team_members: boolean | null
           can_manage_technicians: boolean | null
+          can_manage_testimonials: boolean | null
           can_manage_users: boolean | null
+          can_use_notes: boolean | null
+          can_use_quick_actions: boolean | null
+          can_use_smart_search: boolean | null
+          can_view_ai_insights: boolean | null
           can_view_analytics: boolean | null
           can_view_api_keys: boolean | null
           can_view_appointments: boolean | null
+          can_view_backup: boolean | null
           can_view_blog: boolean | null
           can_view_blog_ads: boolean | null
           can_view_bot_settings: boolean | null
           can_view_coupons: boolean | null
+          can_view_crm: boolean | null
+          can_view_customization: boolean | null
           can_view_deletion_requests: boolean | null
+          can_view_file_manager: boolean | null
           can_view_invoices: boolean | null
           can_view_messages: boolean | null
+          can_view_payment: boolean | null
+          can_view_service_projects: boolean | null
           can_view_services: boolean | null
           can_view_settings: boolean | null
+          can_view_team_members: boolean | null
           can_view_technicians: boolean | null
+          can_view_testimonials: boolean | null
+          can_view_traffic: boolean | null
           can_view_users: boolean | null
           created_at: string | null
           id: string
@@ -54,29 +75,50 @@ export type Database = {
           can_delete_appointments?: boolean | null
           can_export_data?: boolean | null
           can_manage_api_keys?: boolean | null
+          can_manage_backup?: boolean | null
           can_manage_blog?: boolean | null
           can_manage_blog_ads?: boolean | null
           can_manage_bot_settings?: boolean | null
           can_manage_coupons?: boolean | null
+          can_manage_crm?: boolean | null
+          can_manage_customization?: boolean | null
           can_manage_deletion_requests?: boolean | null
+          can_manage_file_manager?: boolean | null
           can_manage_invoices?: boolean | null
+          can_manage_payment?: boolean | null
+          can_manage_service_projects?: boolean | null
           can_manage_services?: boolean | null
           can_manage_settings?: boolean | null
+          can_manage_team_members?: boolean | null
           can_manage_technicians?: boolean | null
+          can_manage_testimonials?: boolean | null
           can_manage_users?: boolean | null
+          can_use_notes?: boolean | null
+          can_use_quick_actions?: boolean | null
+          can_use_smart_search?: boolean | null
+          can_view_ai_insights?: boolean | null
           can_view_analytics?: boolean | null
           can_view_api_keys?: boolean | null
           can_view_appointments?: boolean | null
+          can_view_backup?: boolean | null
           can_view_blog?: boolean | null
           can_view_blog_ads?: boolean | null
           can_view_bot_settings?: boolean | null
           can_view_coupons?: boolean | null
+          can_view_crm?: boolean | null
+          can_view_customization?: boolean | null
           can_view_deletion_requests?: boolean | null
+          can_view_file_manager?: boolean | null
           can_view_invoices?: boolean | null
           can_view_messages?: boolean | null
+          can_view_payment?: boolean | null
+          can_view_service_projects?: boolean | null
           can_view_services?: boolean | null
           can_view_settings?: boolean | null
+          can_view_team_members?: boolean | null
           can_view_technicians?: boolean | null
+          can_view_testimonials?: boolean | null
+          can_view_traffic?: boolean | null
           can_view_users?: boolean | null
           created_at?: string | null
           id?: string
@@ -88,29 +130,50 @@ export type Database = {
           can_delete_appointments?: boolean | null
           can_export_data?: boolean | null
           can_manage_api_keys?: boolean | null
+          can_manage_backup?: boolean | null
           can_manage_blog?: boolean | null
           can_manage_blog_ads?: boolean | null
           can_manage_bot_settings?: boolean | null
           can_manage_coupons?: boolean | null
+          can_manage_crm?: boolean | null
+          can_manage_customization?: boolean | null
           can_manage_deletion_requests?: boolean | null
+          can_manage_file_manager?: boolean | null
           can_manage_invoices?: boolean | null
+          can_manage_payment?: boolean | null
+          can_manage_service_projects?: boolean | null
           can_manage_services?: boolean | null
           can_manage_settings?: boolean | null
+          can_manage_team_members?: boolean | null
           can_manage_technicians?: boolean | null
+          can_manage_testimonials?: boolean | null
           can_manage_users?: boolean | null
+          can_use_notes?: boolean | null
+          can_use_quick_actions?: boolean | null
+          can_use_smart_search?: boolean | null
+          can_view_ai_insights?: boolean | null
           can_view_analytics?: boolean | null
           can_view_api_keys?: boolean | null
           can_view_appointments?: boolean | null
+          can_view_backup?: boolean | null
           can_view_blog?: boolean | null
           can_view_blog_ads?: boolean | null
           can_view_bot_settings?: boolean | null
           can_view_coupons?: boolean | null
+          can_view_crm?: boolean | null
+          can_view_customization?: boolean | null
           can_view_deletion_requests?: boolean | null
+          can_view_file_manager?: boolean | null
           can_view_invoices?: boolean | null
           can_view_messages?: boolean | null
+          can_view_payment?: boolean | null
+          can_view_service_projects?: boolean | null
           can_view_services?: boolean | null
           can_view_settings?: boolean | null
+          can_view_team_members?: boolean | null
           can_view_technicians?: boolean | null
+          can_view_testimonials?: boolean | null
+          can_view_traffic?: boolean | null
           can_view_users?: boolean | null
           created_at?: string | null
           id?: string
