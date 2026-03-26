@@ -166,10 +166,15 @@ const Auth = () => {
             .select("role")
             .eq("user_id", currentUser.id);
           const userRoles = roles?.map((r) => r.role) || [];
-          const isAdminUser = userRoles.includes("admin") || userRoles.includes("super_admin");
 
           toast({ title: "Welcome back!", description: "You have successfully logged in." });
-          navigate(isAdminUser ? "/admin" : "/dashboard");
+          if (userRoles.includes("super_admin")) {
+            navigate("/super-admin");
+          } else if (userRoles.includes("admin")) {
+            navigate("/admin");
+          } else {
+            navigate("/dashboard");
+          }
         }
       }
     } catch {
